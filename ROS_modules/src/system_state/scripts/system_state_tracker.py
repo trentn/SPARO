@@ -6,6 +6,8 @@ import rospy
 from system_state.msg import *
 from system_state.srv import *
 
+from actuation_scripts import *
+
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -16,7 +18,6 @@ target_type = {'VALVE1': 0,
                 'VALVE2': 1,
                 'VALVE3': 2,
                 'BREAKER': 3}
-
 
 class LED_thread(threading.Thread):
     def __init__(self, mode):
@@ -142,6 +143,10 @@ class System:
             else:
                 pass
 
+    def parse_orientation(self, orientation_string):
+        if(self.target['types'] == 'VALVE1'):
+            return orientation_string[2]
+
     def load_mission(self):
         rospy.wait_for_service('load_mission')
         try:
@@ -183,9 +188,10 @@ class System:
             self.target['position']['X'] = target_info.X
             self.target['position']['Y'] = target_info.Y
             self.target['position']['Z'] = target_info.Z
-            self.target['position']['orientation'] = target_info.orientation_state
+            self.target['position']['orientation'] = self.parse_orientation(target_info.orientation_state)
+            
             rospy.loginfo('Detected:' + str(target_info))
-            if(target_info.X == 0 and target_info.Y == 0 and target_info.Z == 0):
+            if(target_info.X == 0 and target_info.Y == 0 or target_info.Z == 0):
                 return False
             return True
         except rospy.ServiceException, e:
@@ -200,51 +206,19 @@ class System:
         time.sleep(3)
         try:
             if(self.target['types']=='VALVE1'):
-                print("entered arm control valve 1")
-                h_needed = .4635 + self.target['position']['Y'] + .01
-                print(h_needed)
-                y_needed = math.sqrt(.455**2-(h_needed-.205+.155)**2) - 0.02 + .07
-                print(y_needed)
-                print(y_needed - self.target['position']['Z'])
-                print(self.target['station'][1])
-                self.move_commands.publish(MoveCommand(self.target['station'][0] - self.target['position']['X' ] + 0.02,
-                                                        self.target['station'][1] + (y_needed - self.target['position']['Z']) + 0.01,
-                                                        0))
-                
-                time.sleep(4)
-                print("First arm movement")
-                self.move_arm.publish(MoveArm(.52,
-                                                90,
-                                                self.target['arm_reset'][2]))
-
-                time.sleep(5)
-                print("Second arm movement")
-                self.move_arm.publish(MoveArm(h_needed,
-                                                90,
-                                                self.target['arm_reset'][2]))
-
-                time.sleep(3)
-                self.move_commands.publish(MoveCommand(self.target['station'][0] - self.target['position']['X' ] + 0.02,
-                                                        self.target['station'][1] + (y_needed - self.target['position']['Z']) + 0.01,
-                                                        0))
-                time.sleep(3)
-                self.move_arm.publish(MoveArm(h_needed-.02,
-                                                90,
-                                                self.target['arm_reset'][2]))
-                                
-                time.sleep(5)
+                if(self.target['position']['orientation'] == 'U'):
+                    actuate_valve1_up(self.target,self.move_commands,self.move_arm)
+            
             return True
-            #move_endeffector = rospy.ServiceProxy('move_endeffector', MoveEndEffector)
-            #return move_endeffector(self.target['position']['X'], self.target['position']['Y'], self.target['position']['Z'])
         except rospy.ServiceException, e:
             rospy.loginfo("Service call failed: %s" %e)
             return False
 
     def set_target_to_desired(self):
         if(self.target['types'] == 'VALVE1'):
-		self.turn_endeffector.publish(TurnEndEffector(int(self.target['desiredPosition'])))
-	time.sleep(1)
-	return True
+            self.turn_endeffector.publish(TurnEndEffector(int(self.target['desiredPosition'])))
+            time.sleep(1)
+        return True
 
     def log_state_change(self, prev_state):
         rospy.loginfo('state change: %s -> %s' %(prev_state, self.state))

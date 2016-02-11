@@ -4,14 +4,14 @@ from system_state.srv import *
 import rospy
 import json
 
-locations = {'A':(1.38+.161,0.45),
-             'B':(1.075+.161,0.45),
-             'C':(0.77+.161,0.45),
-             'D':(0.465+.161,0.45),
-             'E':(0.33,0.45),
-             'F':(0.45,0.33),
-             'G':(0.45,0.425+.161),
-             'H':(0.45,0.73+.161)}
+locations = {'A':(1.30+.161,0.33),
+             'B':(1.03+.161,0.33),
+             'C':(0.70+.161,0.33),
+             'D':(0.425+.161,0.33),
+             'E':(0.28,0.33),
+             'F':(0.33,0.30),
+             'G':(0.33,0.425+.161),
+             'H':(0.33,0.70+.161)}
 
 def arm_rest_position(station_letter):
     if(station_letter >= 'A' and station_letter < 'F'):
@@ -29,7 +29,8 @@ def handle_load_mission(req):
         eachline=content.splitlines()
         mission["tasks"] = []
         for j in range(len(eachline)-1):
-            r1=locations[eachline[j][0]]
+            r1=eachline[j][0]
+            location = locations[r1]
             r4=arm_rest_position(eachline[j][0])
             if eachline[j][1]=="V" and eachline[j][2]=="1":
                 r2='VALVE1'
@@ -73,9 +74,9 @@ def handle_load_mission(req):
                     r33='Down'
 
             if len(eachline[j])==17:
-                result={"station":r1, "types":r2, "desiredPosition":[r31,r32,r33], "arm_reset":r4}
+                result={"station_letter":r1, "station":location, "types":r2, "desiredPosition":[r31,r32,r33], "arm_reset":r4}
             else:
-                result={"station":r1, "types":r2, "desiredPosition":r3,"arm_reset":r4}
+                result={"station_letter":r1, "station":location, "types":r2, "desiredPosition":r3,"arm_reset":r4}
             mission["tasks"].append(result)
 
         mission["time"] = int(eachline[j+1])

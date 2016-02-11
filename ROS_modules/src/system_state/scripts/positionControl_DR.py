@@ -350,7 +350,7 @@ def handle_turn_endeffector(des_pos):
 def init_nodes():
     rospy.init_node("arduino_nodes")
     s = rospy.Subscriber("move_commands", MoveCommand, handle_move_robot) 
-    # s = rospy.Subscriber("turn_endeffector", TurnEndEffector, handle_turn_endeffector)
+    s = rospy.Subscriber("turn_endeffector", TurnEndEffector, handle_turn_endeffector)
 
     rospy.loginfo("Arduino node is running")
     rospy.spin()
