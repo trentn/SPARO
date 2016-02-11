@@ -156,6 +156,8 @@ class System:
     def parse_current_position(self, orientation_string):
        if(self.target['types'] == 'VALVE3'):
            return orientation_string[3]
+       if(self.target['types'] == 'BREAKER_A' or self.target['types'] == 'BREAKER_B'):
+           return orientation_string[1:]
 
     def load_mission(self):
         rospy.wait_for_service('load_mission')
@@ -179,8 +181,9 @@ class System:
 
     def move_to_next_target(self):
         self.move_complete = False
-        self.move_commands.publish(MoveCommand(self.target['station'][0], self.target['station'][1], 0))
         self.move_arm.publish(MoveArm(self.target['arm_reset'][0], self.target['arm_reset'][1], self.target['arm_reset'][2]))
+        time.sleep(3)
+        self.move_commands.publish(MoveCommand(self.target['station'][0], self.target['station'][1], 0))
         rospy.loginfo("Moving to %f,%f" % (self.target['station'][0],self.target['station'][1]))
         while not self.move_complete:
             pass

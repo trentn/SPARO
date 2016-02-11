@@ -33,8 +33,8 @@ outer_d = .4570
 wheel_d = .1524 #wheel diameter in meters (6")
 wheel_dist_per_rev = wheel_d*math.pi
 
-current_location = np.matrix([[0.5],[0.5],[0.0]]) #x(m) y(m) phi(rad) since program start
-desired_location = np.matrix([[0.5],[0.5],[0.0]]) #same formatting as current_location
+current_location = np.matrix([[0.33],[0.33],[0.0]]) #x(m) y(m) phi(rad) since program start
+desired_location = np.matrix([[0.33],[0.33],[0.0]]) #same formatting as current_location
 catchSpeeds = True
 sendSpeeds = True
 TOFread = True
