@@ -77,9 +77,11 @@ bool detect_target(system_state::DetectTarget::Request &req,
     auto const c_intrinsics = pipe.get_active_profile().get_stream(RS2_STREAM_COLOR).as<rs2::video_stream_profile>().get_intrinsics();
 
 
+    float threeD_point[3] = {0};
+    
     // Camera warmup - dropping several first frames to let auto-exposure stabilize
     rs2::frameset frames;
-    for(int i = 0; i < 60; i++)
+    for(int i = 0; i < 30; i++)
     {
         try{
             frames = pipe.wait_for_frames();
@@ -88,6 +90,22 @@ bool detect_target(system_state::DetectTarget::Request &req,
             /**/
         }
     }
+    
+
+    Mat color;
+    Mat mask = Mat::zeros(Size(640,480), CV_8U);
+    mask(Rect(150,50,340,380)) = 255;
+    int tries = 0;
+    while(threeD_point[2] == 0 && tries < 10) {
+
+    try{
+        frames = pipe.wait_for_frames();
+    }
+    catch(const std::exception& e){
+        /**/
+    }
+
+
     // align frames and extract data
     rs2::align align = rs2::align(RS2_STREAM_COLOR);
     auto aligned_frames = align.process(frames);
@@ -99,7 +117,7 @@ bool detect_target(system_state::DetectTarget::Request &req,
     depth_frame = aligned_frames.get_depth_frame();
     
     //filter on color
-    Mat color(Size(640, 480), CV_8UC3, (void*)color_frame.get_data(), Mat::AUTO_STEP);
+    color = Mat(Size(640, 480), CV_8UC3, (void*)color_frame.get_data(), Mat::AUTO_STEP);
     Mat depth(Size(640, 480), CV_8UC3, (void*)depth_frame.get_data(), Mat::AUTO_STEP);
 
     cvtColor(color, color_HSV, COLOR_BGR2HSV);
@@ -108,8 +126,6 @@ bool detect_target(system_state::DetectTarget::Request &req,
             Scalar(target_color->high_H, target_color->high_S, target_color->high_V), color_filtered);
 
     //mask off outside edges
-    Mat mask = Mat::zeros(Size(640,480), CV_8U);
-    mask(Rect(210,50,210,380)) = 255;
     Mat color_masked;
     bitwise_and(color_filtered, color_filtered.clone(), color_masked, mask);
 
@@ -120,10 +136,13 @@ bool detect_target(system_state::DetectTarget::Request &req,
     circle(color, p, 5, Scalar(128,0,0), -1);
 
     //extract x,y,z
-    float threeD_point[3] = {0};
     float pixel[2] = {p.x, p.y};
     rs2_deproject_pixel_to_point(threeD_point, &c_intrinsics, pixel, depth_frame.as<rs2::depth_frame>().get_distance((int)p.x,  (int)p.y));
     
+
+    tries++;
+    } //end bad read while loop
+
     res.X = threeD_point[0];
     res.Y = threeD_point[1];
     res.Z = threeD_point[2];

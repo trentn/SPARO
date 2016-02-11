@@ -17,7 +17,8 @@ import threading
 target_type = {'VALVE1': 0,
                 'VALVE2': 1,
                 'VALVE3': 2,
-                'BREAKER': 3}
+                'BREAKER_A': 3,
+                'BREAKER_B': 3}
 
 class LED_thread(threading.Thread):
     def __init__(self, mode):
@@ -139,6 +140,7 @@ class System:
     def handle_at_location(self, data):
         if self.state == "MOVE_ROBOT":
             if data.at_location == True:
+                time.sleep(2)
                 self.move_complete = True
             else:
                 pass
@@ -146,6 +148,14 @@ class System:
     def parse_orientation(self, orientation_string):
         if(self.target['types'] == 'VALVE1'):
             return orientation_string[2]
+        elif(self.target['types'] == 'VALVE2'):
+            return orientation_string[2]
+        elif(self.target['types'] == 'VALVE3'):
+            return orientation_string[2]
+
+    def parse_current_position(self, orientation_string):
+       if(self.target['types'] == 'VALVE3'):
+           return orientation_string[3]
 
     def load_mission(self):
         rospy.wait_for_service('load_mission')
@@ -182,24 +192,37 @@ class System:
         '''
         rospy.wait_for_service('detect_target')
         try:
-            detect_target = rospy.ServiceProxy('detect_target', DetectTarget)
-            target_info = detect_target(target_type[self.target['types']])
+            captured = False
+            val = 0.03
+            while not captured:
+                detect_target = rospy.ServiceProxy('detect_target', DetectTarget)
+                target_info = detect_target(target_type[self.target['types']])
+                if(target_info.Z != 0):
+                    captured = True
+                else:
+                    val = -val
+                    rospy.loginfo("DETECT_TARGET: Moving and trying again...")
+                    if(self.target['station_letter'] >= 'A' or self.target['station_letter'] < 'F'):
+                        self.target['station'][1] += val
+                    else:
+                        self.target['station'][0] += val
+                    self.move_commands.publish(MoveCommand(self.target['station'][0], self.target['station'][1], 0))
+
             self.target['position'] = {}
             self.target['position']['X'] = target_info.X
             self.target['position']['Y'] = target_info.Y
             self.target['position']['Z'] = target_info.Z
             self.target['position']['orientation'] = self.parse_orientation(target_info.orientation_state)
-            
+            self.target['currentPosition'] = self.parse_current_position(target_info.orientation_state)
             rospy.loginfo('Detected:' + str(target_info))
-            if(target_info.X == 0 and target_info.Y == 0 or target_info.Z == 0):
-                return False
+    
             return True
         except rospy.ServiceException, e:
             rospy.loginfo("Service call failed: %s" % e)
             return False
     
     def target_at_desired(self):
-        return False
+        return False 
     
     def move_end_effector_to_target(self):
         print("in move end effector")
@@ -207,17 +230,36 @@ class System:
         try:
             if(self.target['types']=='VALVE1'):
                 if(self.target['position']['orientation'] == 'U'):
-                    actuate_valve1_up(self.target,self.move_commands,self.move_arm)
-            
+                    actuate_valve1_up(self.target,self.move_commands,self.move_arm, self.turn_endeffector)
+                elif(self.target['position']['orientation'] == 'F'):
+                    actuate_valve1_forward(self.target,self.move_commands,self.move_arm, self.turn_endeffector)
+
+            elif(self.target['types'] == 'VALVE2'):
+                if(self.target['position']['orientation'] == 'F'):
+                    actuate_valve2_forward(self.target,self.move_commands,self.move_arm, self.turn_endeffector)
+                    
+            elif(self.target['types'] == 'VALVE3'):
+                if(self.target['position']['orientation'] == 'U'):
+                    actuate_valve3_up(self.target,self.move_commands,self.move_arm, self.turn_endeffector)
+                elif(self.target['position']['orientation'] == 'F'):
+                    actuate_valve3_forward(self.target,self.move_commands,self.move_arm, self.turn_endeffector)
+                
+            elif(self.target['types'] == 'BREAKER_A'):
+                actuate_breaker_A(self.target,self.move_commands,self.move_arm, self.turn_endeffector)
+
+            elif(self.target['types'] == 'BREAKER_B'):
+                actuate_breaker_B(self.target,self.move_commands,self.move_arm, self.turn_endeffector)
+                
             return True
+
         except rospy.ServiceException, e:
             rospy.loginfo("Service call failed: %s" %e)
             return False
 
     def set_target_to_desired(self):
-        if(self.target['types'] == 'VALVE1'):
-            self.turn_endeffector.publish(TurnEndEffector(int(self.target['desiredPosition'])))
-            time.sleep(1)
+        #if(self.target['types'] == 'VALVE1'):
+        #    self.turn_endeffector.publish(TurnEndEffector(int(self.target['desiredPosition'])))
+        #    time.sleep(1)
         return True
 
     def log_state_change(self, prev_state):
@@ -232,9 +274,9 @@ class System:
             led_thread = LED_thread("pre-op") 
             led_thread.start()
             self.task = 0
-            while not self.button_pressed:
-                pass
-            #raw_input("Press enter to continue with mission")
+            # while not self.button_pressed:
+            #     pass
+            raw_input("Press enter to continue with mission")
             self.state = "LOADING_MISSION"
             self.button_pressed = False
             self.log_state_change("PRE-OPERATION")

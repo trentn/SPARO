@@ -40,38 +40,38 @@ def handle_load_mission(req):
                 r3=eachline[0][4:]
             if eachline[j][1]=="V" and eachline[j][2]=="3":
                 r2='VALVE3'
-                if eachline[j][4]==0:
-                    r3='Open'
-                if eachline[j][4]==1:
-                    r3='closed'
+                if eachline[j][4]=='0':
+                    r3='O'
+                if eachline[j][4]=='1':
+                    r3='C'
             if eachline[j][1]=="A":
-                r2='BREAKER'
+                r2='BREAKER_A'
                 if eachline[j][6]=="U":
-                    r31='Up'
+                    r31='U'
                 else:
-                    r31='Down'
+                    r31='D'
                 if eachline[j][11]=="U":
-                    r32='Up'
+                    r32='U'
                 else:
-                    r32='Down'
+                    r32='D'
                 if eachline[j][16]=="U":
-                    r33='Up'
+                    r33='U'
                 else:
-                    r33='Down'    
+                    r33='D'    
             if eachline[j][1]=="B":
-                r2='BREAKER' 
+                r2='BREAKER_B' 
                 if eachline[j][6]=="U":
-                    r31='Up'
+                    r31='U'
                 else:
-                    r31='Down'
+                    r31='D'
                 if eachline[j][11]=="U":
-                    r32='Up'
+                    r32='U'
                 else:
-                    r32='Down'
+                    r32='D'
                 if eachline[j][16]=="U":
-                    r33='Up'
+                    r33='U'
                 else:
-                    r33='Down'
+                    r33='D'
 
             if len(eachline[j])==17:
                 result={"station_letter":r1, "station":location, "types":r2, "desiredPosition":[r31,r32,r33], "arm_reset":r4}

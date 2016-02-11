@@ -1,3 +1,3 @@
 #!/bin/sh
 
-tmux new-window "$*"
+tmux new-window "$*;bash"

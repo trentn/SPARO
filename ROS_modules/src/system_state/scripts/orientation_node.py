@@ -9,7 +9,7 @@ from tensorflow.keras import backend as K
 import numpy as np
 import rospy
 from system_state.srv import *
-
+from system_state.msg import *
 
 
 global tags
@@ -23,11 +23,11 @@ tags = {0: 'B000',
  7: 'B111',
  8: 'V1F',
  9: 'V1U',
- 10: 'LVF',
- 11: 'SHFC',
- 12: 'SHFO',
- 13: 'SHUC',
- 14: 'SHUO'}
+ 10: 'V2F',
+ 11: 'V3FO',
+ 12: 'V3FC',
+ 13: 'V3UO',
+ 14: 'V3UC'}
 
 
 def load_model():
