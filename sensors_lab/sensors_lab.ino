@@ -1,6 +1,8 @@
 #include <Wire.h>
 #include <SparkFun_MMA8452Q.h>
 
+#define WINDOWSIZE 10
+
 MMA8452Q accel;
 
 const int trigPin = 13;
@@ -42,10 +44,27 @@ void loop() {
 }
 
 void findRange() {
-  digitalWrite(trigPin, HIGH);
-  delay(500);
-  digitalWrite(trigPin, LOW);
-  duration = pulseIn(echoPin, HIGH);
+  //take readings
+  int durations[WINDOWSIZE] = {0};
+  for(int i = 0; i < WINDOWSIZE; i++) {
+    digitalWrite(trigPin, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigPin, LOW);
+    durations[i] = pulseIn(echoPin, HIGH);
+  }
+
+  //simple sort
+  for(int i = WINDOWSIZE; i > 0; i--){
+    for (int j = 1; j < i; j++) {
+      if(durations[j-1] > durations[j]) {
+        int swap = durations[j-1];
+        durations[j-1] = durations[j];
+        durations[j] = swap;
+      }
+    }
+  }
+
+  int duration = durations[WINDOWSIZE/2];
   distance = (duration/2) / 29.1;
 }
 
