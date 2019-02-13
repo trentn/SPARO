@@ -21,6 +21,7 @@ double ticksPerRotation = 1925.0;
 long encPosition[2] = {0,0};
 double encSpeed[2] = {0, 0};
 double vel_error[2] = {0, 0};
+double error[2] {0, 0};
 Encoder DC1_enc = Encoder(a_PINA, a_PINB);
 
 //------------------------------------------------------------------------------------------------------------
@@ -134,7 +135,7 @@ void sr04_Angle_Control()
   //Serial.println(desAngle);
   //Serial.println(currentAngle);
   
-  double error[2];
+ 
   error[1] = desAngle-currentAngle;
   findRange_filtered();
 
@@ -165,7 +166,7 @@ void sr04_Angle_Control()
 
 //------------------------------------------------------------------------------------------------------------
 
-double motorAnglePID_sr04(double error[2],double timestep) //Uses desired angle input from other source and current angle reading from encoder to run some PD 
+double motorAnglePID_sr04(double timestep) //Uses desired angle input from other source and current angle reading from encoder to run some PD 
 {
   
   double kd, kp;
@@ -335,11 +336,34 @@ void printRange(){
 }
 
 //------------------------------------------------------------------------------------------------------------
+void angle_Control(double desSpeed)
+{
+    
+  digitalWrite(DC1_en, HIGH);
+
+  
+  vel_error[1] = vel_error[0];
+  readSpeed();
+  vel_error[0] = desSpeed - encSpeed[0];
+  
+  speed_PID(vel_error,20);
+  if(currentPwm < 0.0) //Directionality check
+    {
+      digitalWrite(DC1_in2, HIGH);
+      analogWrite(DC1_in1, 255+currentPwm);
+    }
+    else
+    {
+      digitalWrite(DC1_in2, LOW);
+      analogWrite(DC1_in1, currentPwm);
+    }
+}
+
+//------------------------------------------------------------------------------------------------------------
 
 void setAngle(double angle){ //angle control
 
   double timeStep = .001; //changes the control delay
-  double error[2];
 
   readEnc();
   error[1] = angle - getAngle(); //REPLACE
@@ -354,7 +378,7 @@ void setAngle(double angle){ //angle control
     error[0] = error[1];
     error[1] = angle - getAngle();
     Serial.println(error[1]); //optional error tracking
-    pwm = (int)motorAnglePID(error, timeStep);
+    pwm = (int)motorAnglePID(timeStep);
 
     if(pwm < 0.0) //Directionality check
     {
@@ -380,13 +404,7 @@ void setAngle(double angle){ //angle control
 
 //------------------------------------------------------------------------------------------------------------
 
-void motorProtocol_2(){ //velocity control based on sr04 reading
-  
-}
-
-//------------------------------------------------------------------------------------------------------------
-
-double motorAnglePID(double error[2],double timestep) //Uses desired angle input from other source and current angle reading from encoder to run some PD 
+double motorAnglePID(double timestep) //Uses desired angle input from other source and current angle reading from encoder to run some PD 
 {
   
   double kd, kp;
@@ -436,6 +454,34 @@ double getAngle(){
   return encPosition[0]/ticksPerRotation*360.00;
 }
 
+void setAngle_2(double desAngle){ //angle control
+
+  double timeStep = .001; //changes the control delay
+ 
+
+  readEnc();
+  error[1] = desAngle - getAngle(); //REPLACE
+  error[0] = error[1];
+  int pwm = 0;
+  digitalWrite(DC1_en, HIGH);
+  readEnc();
+  error[0] = error[1];
+  error[1] = angle - getAngle();
+  Serial.println(error[1]); //optional error tracking
+  pwm = (int)motorAnglePID(timeStep);
+  if(pwm < 0.0) //Directionality check
+  {
+    digitalWrite(DC1_in2, HIGH);
+    analogWrite(DC1_in1, 255+pwm);
+  }
+  else
+  {
+    digitalWrite(DC1_in2, LOW);
+    analogWrite(DC1_in1, pwm);
+  }
+  delay(timeStep*1000.0);
+ }
+  
 
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
