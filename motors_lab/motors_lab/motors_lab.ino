@@ -5,8 +5,10 @@
 String inputString = "";         // a String to hold incoming data
 bool commandComplete = false;  // whether the string is complete
 
+#define INT_PIN 2
+
 enum STATE{GUI,SENSOR};
-int state = SENSOR;
+volatile int state = SENSOR;
 
 RCServo*  rcservo;
 AStepper* stepper;
@@ -18,6 +20,8 @@ void setup() {
   stepper = new AStepper();
   dcmotor = new DCMotor();
   inputString.reserve(20);
+
+  attachInterrupt(digitalPinToInterrupt(INT_PIN), buttonStateChange, HIGH);
 }
 
 
@@ -61,6 +65,20 @@ void updateState(String control_state) {
               break;
     case 'S': state = SENSOR;
               break;
+  }
+}
+
+void buttonStateChange(){
+  delay(1);
+  if(digitalRead(INT_PIN) == HIGH){
+    if(state == SENSOR) {
+      state = GUI;
+      Serial.println("C G");
+    }
+    else if(state == GUI) {
+      state = SENSOR;
+      Serial.println("C S");
+    }
   }
 }
 
