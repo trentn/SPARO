@@ -15,40 +15,135 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="7" column="2">
-     <widget class="QGroupBox" name="dcmotor_directions">
-      <property name="title">
-       <string>Direction</string>
+    <item row="12" column="2">
+     <widget class="QPushButton" name="dcmotor_speed_button">
+      <property name="text">
+       <string>Set DC Motor Speed</string>
       </property>
-      <widget class="QRadioButton" name="dcmotor_forward">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>20</y>
-         <width>82</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Forward</string>
-       </property>
-      </widget>
-      <widget class="QRadioButton" name="dcmotor_reverse">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>40</y>
-         <width>82</width>
-         <height>17</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Reverse</string>
-       </property>
-      </widget>
+     </widget>
+    </item>
+    <item row="7" column="2">
+     <widget class="QPushButton" name="dcmotor_position_button">
+      <property name="text">
+       <string>Set DC Motor Position</string>
+      </property>
      </widget>
     </item>
     <item row="7" column="0">
+     <widget class="QPushButton" name="stepper_position_button">
+      <property name="text">
+       <string>Set Stepper Position</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="1">
+     <widget class="QPushButton" name="rcservo_position_button">
+      <property name="text">
+       <string>Set Servo Position</string>
+      </property>
+     </widget>
+    </item>
+    <item row="15" column="0">
+     <widget class="QLabel" name="debug_output">
+      <property name="text">
+       <string>TextLabel</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QLabel" name="rcservo_controls_label">
+      <property name="text">
+       <string>RC Servo Controls</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="stepper_controls_label">
+      <property name="text">
+       <string>Stepper Motor Controls</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QSpinBox" name="rcservo_degrees_spin">
+      <property name="maximum">
+       <number>180</number>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="1">
+     <widget class="QLCDNumber" name="rcservo_lcd"/>
+    </item>
+    <item row="14" column="2">
+     <widget class="QLCDNumber" name="dcmotor_lcd"/>
+    </item>
+    <item row="13" column="1" alignment="Qt::AlignBottom">
+     <widget class="QLabel" name="rcservo_lcd_label">
+      <property name="text">
+       <string>RC Servo Angle</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0" alignment="Qt::AlignTop">
+     <widget class="QLabel" name="stepper_degrees_label">
+      <property name="text">
+       <string>Degrees Rotation</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="2">
+     <widget class="QSpinBox" name="dcmotor_degrees_spin">
+      <property name="maximum">
+       <number>9999</number>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2">
+     <widget class="QLabel" name="dcmotor_controls_label">
+      <property name="text">
+       <string>DC Motor Controls</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="2">
+     <widget class="QSpinBox" name="spinBox">
+      <property name="maximum">
+       <number>100</number>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="2" alignment="Qt::AlignTop">
+     <widget class="QLabel" name="dcmotor_speed_label">
+      <property name="text">
+       <string>Speed</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="2" alignment="Qt::AlignTop">
+     <widget class="QLabel" name="dcmotor_degrees_label">
+      <property name="text">
+       <string>Degrees Rotation</string>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="0">
+     <widget class="QLCDNumber" name="stepper_lcd"/>
+    </item>
+    <item row="6" column="1" alignment="Qt::AlignTop">
+     <widget class="QLabel" name="rcservo_angle_label">
+      <property name="text">
+       <string>Angle</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0">
+     <widget class="QSpinBox" name="stepper_degrees_spin">
+      <property name="maximum">
+       <number>9999</number>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
      <widget class="QGroupBox" name="stepper_directions">
       <property name="minimumSize">
        <size>
@@ -90,110 +185,65 @@
       </widget>
      </widget>
     </item>
-    <item row="4" column="1" alignment="Qt::AlignTop">
-     <widget class="QLabel" name="rcservo_angle_label">
-      <property name="text">
-       <string>Angle</string>
+    <item row="2" column="2">
+     <widget class="QGroupBox" name="dcmotor_directions">
+      <property name="title">
+       <string>Direction</string>
       </property>
-     </widget>
-    </item>
-    <item row="8" column="1">
-     <widget class="QPushButton" name="rcservo_position_button">
-      <property name="text">
-       <string>Set Servo Position</string>
-      </property>
-     </widget>
-    </item>
-    <item row="10" column="2">
-     <widget class="QLCDNumber" name="lcdNumber_3"/>
-    </item>
-    <item row="0" column="1">
-     <widget class="QLabel" name="rcservo_controls_label">
-      <property name="text">
-       <string>RC Servo Controls</string>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="2">
-     <widget class="QLabel" name="dcmotor_controls_label">
-      <property name="text">
-       <string>DC Motor Controls</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="1">
-     <widget class="QSpinBox" name="rcservo_degrees_spin"/>
-    </item>
-    <item row="3" column="2">
-     <widget class="QSpinBox" name="dcmotor_degrees_spin"/>
-    </item>
-    <item row="5" column="2">
-     <widget class="QSpinBox" name="spinBox"/>
-    </item>
-    <item row="9" column="1" alignment="Qt::AlignBottom">
-     <widget class="QLabel" name="label_2">
-      <property name="text">
-       <string>Servo Angle</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="2" alignment="Qt::AlignTop">
-     <widget class="QLabel" name="dcmotor_degrees_label">
-      <property name="text">
-       <string>Degrees Rotation</string>
-      </property>
-     </widget>
-    </item>
-    <item row="10" column="0">
-     <widget class="QLCDNumber" name="lcdNumber"/>
-    </item>
-    <item row="10" column="1">
-     <widget class="QLCDNumber" name="lcdNumber_2"/>
-    </item>
-    <item row="8" column="0">
-     <widget class="QPushButton" name="stepper_position_button">
-      <property name="text">
-       <string>Set Stepper Position</string>
-      </property>
-     </widget>
-    </item>
-    <item row="4" column="0" alignment="Qt::AlignTop">
-     <widget class="QLabel" name="stepper_degrees_label">
-      <property name="text">
-       <string>Degrees Rotation</string>
-      </property>
+      <widget class="QRadioButton" name="dcmotor_forward">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>82</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Forward</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QRadioButton" name="dcmotor_reverse">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>40</y>
+         <width>82</width>
+         <height>17</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Reverse</string>
+       </property>
+      </widget>
      </widget>
     </item>
     <item row="0" column="0">
-     <widget class="QLabel" name="stepper_controls_label">
+     <widget class="QCheckBox" name="user_control_enable">
       <property name="text">
-       <string>Stepper Motor Controls</string>
+       <string>Enable User Input (disables Sensor Control)</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
       </property>
      </widget>
     </item>
-    <item row="3" column="0">
-     <widget class="QSpinBox" name="stepper_degrees_spin">
-      <property name="maximum">
-       <number>9999</number>
-      </property>
-     </widget>
-    </item>
-    <item row="8" column="2">
-     <widget class="QPushButton" name="dcmotor_position_button">
+    <item row="13" column="0" alignment="Qt::AlignBottom">
+     <widget class="QLabel" name="stepper_lcd_label">
       <property name="text">
-       <string>Set DC Motor Position</string>
+       <string>Stepper Position</string>
       </property>
      </widget>
     </item>
-    <item row="6" column="2" alignment="Qt::AlignTop">
-     <widget class="QLabel" name="label_3">
+    <item row="13" column="2" alignment="Qt::AlignBottom">
+     <widget class="QLabel" name="dcmotor_lcd_label">
       <property name="text">
-       <string>Speed</string>
+       <string>DC Motor Position</string>
       </property>
      </widget>
-    </item>
-    <item row="11" column="0" colspan="3">
-     <widget class="QPlainTextEdit" name="plainTextEdit"/>
     </item>
    </layout>
   </widget>

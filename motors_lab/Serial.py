@@ -39,14 +39,33 @@ class ProcessSerial(QThread):
                 self.ser.write(b'R %d\n' % angle.value())
         return rcservo_command
 
-    def build_dcmotor_command(self, forward, reverse, degrees, speed):
-        def dcmotor_command():
+    def build_dcmotor_position_command(self, forward, reverse, degrees):
+        def dcmotor_position_command():
             if(self.ser.is_open):
                 if(forward.isChecked()):
-                    self.ser.write(b'D F %d %d\n' % (degrees.value(), speed.value()))
+                    self.ser.write(b'D P F %d\n' % degrees.value())
                 elif(reverse.isChecked()):
-                    self.ser.write(b'D R %d %d\n' % (degrees.value(), speed.value()))
-        return dcmotor_command
+                    self.ser.write(b'D P R %d\n' % degrees.value())
+        return dcmotor_position_command
+
+    def build_dcmotor_speed_command(self, forward, reverse, speed):
+        def dcmotor_speed_command():
+            if(self.ser.is_open):
+                if(forward.isChecked()):
+                    self.ser.write(b'D S F %d\n' % speed.value())
+                elif(reverse.isChecked()):
+                    self.ser.write(b'D S R %d\n' % speed.value())
+        return dcmotor_speed_command
+
+
+    def build_controls_changed(self, enabled):
+        def controls_changed():
+            if(self.ser.is_open):
+                if(enabled.isChecked()):
+                    self.ser.write(b'C G\n')
+                else:
+                    self.ser.write(b'C S\n')
+        return controls_changed
 
     def run(self):
         while True:
