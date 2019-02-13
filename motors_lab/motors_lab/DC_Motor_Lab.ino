@@ -18,7 +18,9 @@ int waitTime = 70;
 #define a_PINA 2
 #define a_PINB 3
 double ticksPerRotation = 1925.0;
-long encPosition = -999;
+long encPosition[2] = {0,0};
+double encSpeed[2] = {0, 0};
+double vel_error[2] = {0, 0};
 Encoder DC1_enc = Encoder(a_PINA, a_PINB);
 
 //------------------------------------------------------------------------------------------------------------
@@ -27,6 +29,7 @@ Encoder DC1_enc = Encoder(a_PINA, a_PINB);
 #define DC1_in1 6 //PWM
 #define DC1_in2 7 //directional pin
 #define DC1_en  8 // enable  pin
+double currentPwm = 0;
 
 //------------------------------------------------------------------------------------------------------------
 
@@ -48,13 +51,70 @@ void setup() {
 
 void loop() {
   
-   sr04_Angle_Control();
-  
+   speed_Control(360);
+   Serial.println(encSpeed[0]);
+   
 }
 
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
+
+void readSpeed()
+{
+  readEnc();
+  delay(20);
+  readEnc();
+  double stepinc = (20)/1000.0;
+  encSpeed[1] = encSpeed[0];
+  encSpeed[0] = (encPosition[0]-encPosition[1])/stepinc*360/ticksPerRotation;
+}
+
+//------------------------------------------------------------------------------------------------------------
+
+void speed_PID(double vel_error[2],double timestep)
+{
+  double kd, kp;
+ 
+  kp = 255.0/1850.0;
+  kd = 7.5;
+ 
+  currentPwm = currentPwm+( kp*vel_error[0] + (vel_error[0]-vel_error[1])/timestep * kd);
+
+  if(currentPwm > 255)
+  {
+    currentPwm = 255;
+  }
+  else if(currentPwm < -255)
+  {
+    currentPwm = -255;
+  }
+}
+
+//------------------------------------------------------------------------------------------------------------
+
+void speed_Control(double desSpeed)
+{
+    
+  digitalWrite(DC1_en, HIGH);
+
+  
+  vel_error[1] = vel_error[0];
+  readSpeed();
+  vel_error[0] = desSpeed - encSpeed[0];
+  
+  speed_PID(vel_error,20);
+  if(currentPwm < 0.0) //Directionality check
+    {
+      digitalWrite(DC1_in2, HIGH);
+      analogWrite(DC1_in1, 255+currentPwm);
+    }
+    else
+    {
+      digitalWrite(DC1_in2, LOW);
+      analogWrite(DC1_in1, currentPwm);
+    }
+}
 
 //------------------------------------------------------------------------------------------------------------
 
@@ -66,6 +126,10 @@ void sr04_Angle_Control()
   readEnc();
   double currentAngle = getAngle();
   double desAngle = (distance-5)/30.0*180.0;
+
+  if(desAngle > 720){
+    desAngle = 720;
+  }
 
   //Serial.println(desAngle);
   //Serial.println(currentAngle);
@@ -83,7 +147,7 @@ void sr04_Angle_Control()
   
   double pwm = motorAnglePID_sr04(error, sr04delay);
 
-  Serial.println(pwm);
+  //Serial.println(pwm);
   
   digitalWrite(DC1_en, HIGH);
 
@@ -168,6 +232,7 @@ void motorFullBackward(int duration)
   digitalWrite(DC1_en,LOW); 
 }
 
+//------------------------------------------------------------------------------------------------------------
 
 void pwmRun(int pwm, int duration){
   digitalWrite(DC1_en, HIGH);
@@ -184,9 +249,9 @@ void pwmRunEncoder(int pwm,int encoder_cap)
   digitalWrite(DC1_in2, LOW);
   analogWrite(DC1_in1, pwm);
 
-  while( abs(encPosition) < encoder_cap)
+  while( abs(encPosition[0]) < encoder_cap)
   {
-    Serial.println(encPosition);
+    Serial.println(encPosition[0]);
   }
 
   digitalWrite(DC1_in1, LOW);
@@ -200,10 +265,12 @@ void motorRamp(int tdelay){ //test function to ramp motor up over a period of ti
   digitalWrite(DC1_en, HIGH);
   digitalWrite(DC1_in2, LOW);
   digitalWrite(DC1_in1, HIGH);
-  for(int i = 0; i <= 255.0; i++)
+  for(int i = 25; i <= 255.0; i++)
   {
     analogWrite(DC1_in1, i);
     Serial.println(i);
+    readSpeed();
+    Serial.println(encSpeed[0]);
     delay(tdelay);
   }
   digitalWrite(DC1_in1,LOW);
@@ -319,12 +386,6 @@ void motorProtocol_2(){ //velocity control based on sr04 reading
 
 //------------------------------------------------------------------------------------------------------------
 
-void motorProtocol_3(){ //Hard brake using sr04 as a proxy sensor
-  
-}
-
-//------------------------------------------------------------------------------------------------------------
-
 double motorAnglePID(double error[2],double timestep) //Uses desired angle input from other source and current angle reading from encoder to run some PD 
 {
   
@@ -365,13 +426,14 @@ double motorAnglePID(double error[2],double timestep) //Uses desired angle input
 
 void readEnc(){
 
-    encPosition = DC1_enc.read();
-//    Serial.print("encPosition ");
-//    Serial.println(encPosition);
+    encPosition[1] = encPosition[0];
+    encPosition[0] = DC1_enc.read();
+//    Serial.print("encPosition[0] ");
+//    Serial.println(encPosition[0]);
 }
 
 double getAngle(){
-  return encPosition/ticksPerRotation*360.00;
+  return encPosition[0]/ticksPerRotation*360.00;
 }
 
 
@@ -379,4 +441,3 @@ double getAngle(){
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
-
