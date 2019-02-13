@@ -14,14 +14,18 @@ class RCServo {
     
     void update(){
       servo.write(degree);
+      Serial.print("R ");
+      Serial.print(degree);
+      Serial.println(" degrees");
     }
     
     void sensorRead(){
       int pot = analogRead(potpin);
       degree = map(pot, 0, 1023, 0, 180);
-      double voltage = map(pot, 0, 1023, 0, 5);
-      /*Serial.print("P ");
-      Serial.println(voltage);*/
+      double voltage = (pot*5.0)/1023;
+      Serial.print("P ");
+      Serial.print(voltage);
+      Serial.println("V");
     }
 
     void guiCommand(String command){

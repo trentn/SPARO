@@ -70,5 +70,21 @@ class ProcessSerial(QThread):
     def run(self):
         while True:
             out = self.ser.readline()
-            self.output.setText(str(out)) #will crash app after too much data
-            print(out)
+            self.parse_serial(out.decode())
+            print(str(out))
+
+    def parse_serial(self, output):
+        char = output[0]
+        if(char == 'A'):
+            self.output["accelerometer"].setText(output[2:-2])
+        elif(char == 'P'):
+            self.output["potentiometer"].setText(output[2:-2])
+        elif(char == 'U'):
+            self.output["ultrasonic"].setText(output[2:-2])
+        elif(char == 'R'):
+            self.output["rcservo_position"].setText(output[2:-2])
+        elif(char == 'S'):
+            self.output["stepper_position"].setText(output[2:-2])
+        elif(char == 'D'):
+            self.output["dcmotor_position"].setText(output[2:-2])
+            
