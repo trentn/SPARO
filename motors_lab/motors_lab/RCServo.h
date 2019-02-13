@@ -1,5 +1,7 @@
 #include <Servo.h>
 
+#define SERVO_PIN 7
+
 class RCServo {
   public:
     Servo servo;
@@ -7,7 +9,7 @@ class RCServo {
     volatile int degree = 0;
 
     RCServo(){
-      servo.attach(9);
+      servo.attach(SERVO_PIN);
     }
     
     void update(){
@@ -17,6 +19,9 @@ class RCServo {
     void sensorRead(){
       int pot = analogRead(potpin);
       degree = map(pot, 0, 1023, 0, 180);
+      double voltage = map(pot, 0, 1023, 0, 5);
+      /*Serial.print("P ");
+      Serial.println(voltage);*/
     }
 
     void guiCommand(String command){

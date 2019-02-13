@@ -104,7 +104,6 @@ class Ui_MainWindow(object):
         self.dcmotor_reverse.setObjectName("dcmotor_reverse")
         self.gridLayout.addWidget(self.dcmotor_directions, 2, 2, 1, 1)
         self.user_control_enable = QtWidgets.QCheckBox(self.centralwidget)
-        self.user_control_enable.setChecked(True)
         self.user_control_enable.setObjectName("user_control_enable")
         self.gridLayout.addWidget(self.user_control_enable, 0, 0, 1, 1)
         self.stepper_lcd_label = QtWidgets.QLabel(self.centralwidget)

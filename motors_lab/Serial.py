@@ -28,9 +28,9 @@ class ProcessSerial(QThread):
         def stepper_command():
             if(self.ser.is_open):
                 if(forward.isChecked()):
-                    self.ser.write(b'S F %d\n' % degrees.value())
+                    self.ser.write(b'S %d\n' % degrees.value())
                 elif(reverse.isChecked()):
-                    self.ser.write(b'S R %d\n' % degrees.value())
+                    self.ser.write(b'S -%d\n' % degrees.value())
         return stepper_command
 
     def build_rcservo_command(self, angle):
