@@ -78,7 +78,7 @@ class Ui_MainWindow(object):
         self.stepper_lcd_label.setObjectName("stepper_lcd_label")
         self.gridLayout.addWidget(self.stepper_lcd_label, 13, 0, 1, 1, QtCore.Qt.AlignBottom)
         self.spinBox = QtWidgets.QSpinBox(self.centralwidget)
-        self.spinBox.setMaximum(100)
+        self.spinBox.setMaximum(360)
         self.spinBox.setObjectName("spinBox")
         self.gridLayout.addWidget(self.spinBox, 8, 2, 1, 1)
         self.dcmotor_degrees_label = QtWidgets.QLabel(self.centralwidget)

@@ -43,18 +43,18 @@ class ProcessSerial(QThread):
         def dcmotor_position_command():
             if(self.ser.is_open):
                 if(forward.isChecked()):
-                    self.ser.write(b'D P F %d\n' % degrees.value())
+                    self.ser.write(b'D A %d\n' % degrees.value())
                 elif(reverse.isChecked()):
-                    self.ser.write(b'D P R %d\n' % degrees.value())
+                    self.ser.write(b'D A -%d\n' % degrees.value())
         return dcmotor_position_command
 
     def build_dcmotor_speed_command(self, forward, reverse, speed):
         def dcmotor_speed_command():
             if(self.ser.is_open):
                 if(forward.isChecked()):
-                    self.ser.write(b'D S F %d\n' % speed.value())
+                    self.ser.write(b'D S %d\n' % speed.value())
                 elif(reverse.isChecked()):
-                    self.ser.write(b'D S R %d\n' % speed.value())
+                    self.ser.write(b'D S -%d\n' % speed.value())
         return dcmotor_speed_command
 
 

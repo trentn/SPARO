@@ -1,6 +1,6 @@
 #include <Servo.h>
 
-#define SERVO_PIN 7
+#define SERVO_PIN 4
 
 class RCServo {
   public:

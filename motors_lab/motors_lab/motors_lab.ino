@@ -5,7 +5,7 @@
 String inputString = "";         // a String to hold incoming data
 bool commandComplete = false;  // whether the string is complete
 
-#define INT_PIN 2
+#define INT_PIN A5
 
 enum STATE{GUI,SENSOR};
 volatile int state = SENSOR;
@@ -16,11 +16,12 @@ DCMotor*  dcmotor;
 
 void setup() {
   Serial.begin (9600);
+  Serial.println("STARTUP!!!!");
   rcservo = new RCServo();
   stepper = new AStepper();
   dcmotor = new DCMotor();
   inputString.reserve(20);
-
+  Serial.println("Almost");
   attachInterrupt(digitalPinToInterrupt(INT_PIN), buttonStateChange, HIGH);
 }
 
@@ -40,12 +41,14 @@ void loop() {
         case 'S': stepper->guiCommand(inputString.substring(2));
                   stepper->update();
                   break;
-        case 'D': break;
+        case 'D': dcmotor->guiCommand(inputString.substring(2));
+                  break;
         default: break;
       }
       inputString = "";
       commandComplete = false;
     }
+    dcmotor->update();
   }
   if(state == SENSOR) {
     //Handle RC Servo
@@ -55,8 +58,9 @@ void loop() {
     //Handle Stepper
     stepper->sensorRead();
     stepper->update();
+
+    dcmotor->sr04_Angle_Control();
   }
-  //dcmotor->update();
 }
 
 void updateState(String control_state) {
