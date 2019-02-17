@@ -70,8 +70,11 @@ class System:
         rospy.wait_for_service('detect_target')
         try:
             detect_target = rospy.ServiceProxy('detect_target', DetectTarget)
-            rospy.loginfo(str(detect_target()))
-            self.target['desired_state'] = {}
+            target_info = detect_target()
+            self.target['position'] = {}
+            self.target['position']['X'] = target_info.X
+            self.target['position']['Y'] = target_info.Y
+            self.target['position']['Z'] = target_info.Z
             return True
         except rospy.ServiceException, e:
             rospy.loginfo("Service call failed: %s" % e)
@@ -80,11 +83,18 @@ class System:
     def target_at_desired(self):
         return False
     
+    def move_end_effector_to_target(self):
+        rospy.wait_for_service('move_endeffector')
+        try:
+            move_endeffector = rospy.ServiceProxy('move_endeffector', MoveEndEffector)
+            return move_endeffector(self.target['position']['X'], self.target['position']['Y'], self.target['position']['Z'])
+        except rospy.ServiceException, e:
+            rospy.loginfo("Service call failed: %s" %e)
+            return False
+
     def set_target_to_desired(self):
         return True
 
-    def move_end_effector_to_target(self):
-        return True
 
     def log_state_change(self, prev_state):
         rospy.loginfo('state change: %s -> %s' %(prev_state, self.state))
