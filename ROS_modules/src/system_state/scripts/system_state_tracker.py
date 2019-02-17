@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import json
 import rospy
 from system_state.msg import *
 from system_state.srv import *
@@ -35,10 +36,17 @@ class System:
             self.button_pressed = True
 
     def load_mission(self):
-        return True
+        rospy.wait_for_service('load_mission')
+        try:
+            get_mission = rospy.ServiceProxy('load_mission', LoadMission)
+            self.mission = json.loads(get_mission().json_mission)
+            return True
+        except rospy.ServiceException, e:
+            rospy.loginfo("Service call failed: %s" % e)
 
     def mission_complete(self):
-        return False
+        rospy.loginfo(str(self.mission))
+        return True
 
     def set_next_target(self):
         target = {}
