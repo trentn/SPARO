@@ -46,13 +46,22 @@ class System:
 
     def mission_complete(self):
         rospy.loginfo(str(self.mission))
-        return True
+        return False
 
     def set_next_target(self):
-        target = {}
+        '''
+        TODO: set this from mission 
+        '''
+        self.target = {'location': {'X':0, 'Y':0}}
 
     def move_to_next_target(self):
-        return True
+        rospy.wait_for_service('move_robot')
+        try:
+            move_robot = rospy.ServiceProxy('move_robot', MoveRobot)
+            return move_robot(self.target['location']['X'], self.target['location']['Y']).reached_position
+        except rospy.ServiceException, e:
+            rospy.loginfo("Service call failed: %s" % e)
+            return False
 
     def detect_target_state_position(self):
         return True

@@ -60,6 +60,7 @@ add_service_files(
   LoadMission.srv
   MoveEndEffector.srv
   SetTargetState.srv
+  MoveRobot.srv
 )
 
 ## Generate actions in the 'action' folder
