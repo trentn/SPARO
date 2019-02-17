@@ -64,7 +64,18 @@ class System:
             return False
 
     def detect_target_state_position(self):
-        return True
+        '''
+        TODO: update target info with service call return
+        '''
+        rospy.wait_for_service('detect_target')
+        try:
+            detect_target = rospy.ServiceProxy('detect_target', DetectTarget)
+            rospy.loginfo(str(detect_target()))
+            self.target['desired_state'] = {}
+            return True
+        except rospy.ServiceException, e:
+            rospy.loginfo("Service call failed: %s" % e)
+            return False
     
     def target_at_desired(self):
         return False
