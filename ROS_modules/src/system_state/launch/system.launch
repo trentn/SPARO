@@ -1,0 +1,5 @@
+<launch>
+    <node name="system_state_tracker" pkg="system_state" type="system_state_tracker.py"/>
+    <node name="mission_parser" pkg="system_state" type="load_mission.py"/>
+    <node name="button" pkg="system_state" type="button.py" output="screen"/>
+</launch>
