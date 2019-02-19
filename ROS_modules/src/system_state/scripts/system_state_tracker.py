@@ -33,7 +33,9 @@ class System:
         rospy.loginfo("System starting state: %s" % self.state)
         
 	self.status_pin = 6
+	self.error_pin = 5
 	GPIO.setup(self.status_pin, GPIO.OUT, initial=GPIO.LOW)        
+	GPIO.setup(self.error_pin, GPIO.OUT, initial=GPIO.LOW)        
 
 
     def handle_button(self, data):
@@ -196,6 +198,8 @@ class System:
         ERROR state handling
         '''
         if self.state == "ERROR":
+            GPIO.output(self.status_pin, GPIO.LOW)
+            GPIO.output(self.error_pin, GPIO.HIGH)
             rospy.loginfo("SPARO is in an ERROR state!!")
             raw_input("Press ENTER to kill")
             exit()
