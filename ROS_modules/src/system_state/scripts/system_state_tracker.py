@@ -21,12 +21,25 @@ class LED_thread(threading.Thread):
             self.blink = self.pre_op_blink
         if mode == 'operation':
             self.blink = self.operation
+        if mode == 'loading':
+            self.blink = self.loading_blink
+        if mode == 'move_robot':
+            self.blink = self.move_robot
+        if mode == 'detect_target':
+            self.blink = self.detect_target
+        if mode == 'move_endeffector':
+            self.blink = self.move_endeffector
+        if mode == 'set_target':
+            self.blink = self.set_target
+        if mode == 'error':
+            self.blink = self.error
 
         self.status_pin = 6
 	self.error_pin = 5
-	GPIO.setup(self.status_pin, GPIO.OUT, initial=GPIO.LOW)        
-	GPIO.setup(self.error_pin, GPIO.OUT, initial=GPIO.LOW) 
-
+        self.locomotion_pin = 17
+        self.vision_pin = 27
+        self.endeffector_pin = 22
+	
         threading.Thread.__init__(self, name="LED %s"%mode)
 
     def run(self):
@@ -41,12 +54,41 @@ class LED_thread(threading.Thread):
 
     def loading_blink(self):
         GPIO.output(self.status_pin, GPIO.HIGH)
-        time.sleep(.20)
+        time.sleep(.15)
         GPIO.output(self.status_pin, GPIO.LOW)
-        time.sleep(.20)
+        time.sleep(.15)
 
     def operation(self):
         GPIO.output(self.status_pin, GPIO.HIGH)
+        self._stopevent.set()
+
+    def move_robot(self):
+        GPIO.output(self.locomotion_pin, GPIO.HIGH)
+        time.sleep(.50)
+        GPIO.output(self.locomotion_pin, GPIO.LOW)
+        time.sleep(.0001)
+    
+    def detect_target(self):
+        GPIO.output(self.vision_pin, GPIO.HIGH)
+        time.sleep(.50)
+        GPIO.output(self.vision_pin, GPIO.LOW)
+        time.sleep(.0001)
+
+    def move_endeffector(self):
+        GPIO.output(self.endeffector_pin, GPIO.HIGH)
+        time.sleep(.50)
+        GPIO.output(self.endeffector_pin, GPIO.LOW)
+        time.sleep(.0001)
+
+    def set_target(self):
+        GPIO.output(self.endeffector_pin, GPIO.HIGH)
+        time.sleep(.50)
+        GPIO.output(self.endeffector_pin, GPIO.LOW)
+        time.sleep(.25)
+
+    def error(self):
+        GPIO.output(self.status_pin, GPIO.LOW)
+        GPIO.output(self.error_pin, GPIO.HIGH)
         self._stopevent.set()
 
     def join(self, timeout=None):
@@ -166,11 +208,14 @@ class System:
         LOADING_MISSION state handling
         '''
         if self.state == "LOADING_MISSION":
+            led_thread = LED_thread("loading")
+            led_thread.start()
             if not self.load_mission():
                 self.state = "PRE-OPERATION"
             else:
                 self.state = "MISSION_STATUS_CHECK"
             self.log_state_change("LOADING_MISSION")
+            led_thread.join()
 
         '''
         MISSION_STATUS_CHECK state handling
@@ -189,17 +234,21 @@ class System:
         MOVE_ROBOT state handling
         '''
         if self.state == "MOVE_ROBOT":
+            led_thread = LED_thread("move_robot")
+            led_thread.start()
             if not self.move_to_next_target():
                 self.state = "ERROR"
             else:
                 self.state = "DETECT_TARGET"
-            
             self.log_state_change("MOVE_ROBOT")
+            led_thread.join()
 
         '''
         DETECT_TARGET state handling
         '''
         if self.state == "DETECT_TARGET":
+            led_thread = LED_thread("detect_target")
+            led_thread.start()
             if not self.detect_target_state_position():
                 self.state = "ERROR"
             else:
@@ -207,39 +256,58 @@ class System:
                     self.state = "MISSION_STATUS_CHECK"
                 else:
                     self.state = "MOVE_END_EFFECTOR"
-
             self.log_state_change("DETECT_TARGET")
-        
+            led_thread.join()
+
         '''
         MOVE_END_EFFECTOR state handling
         '''
         if self.state == "MOVE_END_EFFECTOR":
+            led_thread = LED_thread("move_endeffector")
+            led_thread.start()
             if not self.move_end_effector_to_target():
                 self.state = "ERROR"
             else:
                 self.state = "SET_TARGET_STATE"
             self.log_state_change("MOVE_END_EFFECTOR")
+            led_thread.join()
 
         '''
         SET_TARGET_STATE state handling
         '''
         if self.state == "SET_TARGET_STATE":
+            led_thread = LED_thread("set_target")
+            led_thread.start()
             if not self.set_target_to_desired():
                 self.state = "ERROR"
             else:
                 self.state = "MISSION_STATUS_CHECK"
             
             self.log_state_change("SET_TARGET_STATE")
+            led_thread.join()
 
         '''
         ERROR state handling
         '''
         if self.state == "ERROR":
+            led_thread = LED_thread("error")
+            led_thread.start()
             rospy.loginfo("SPARO is in an ERROR state!!")
             raw_input("Press ENTER to kill")
             exit()
 
 if __name__ == "__main__":
+    status_pin = 6
+    error_pin = 5
+    locomotion_pin = 17
+    vision_pin = 27
+    endeffector_pin = 22
+    GPIO.setup(status_pin, GPIO.OUT, initial=GPIO.LOW)        
+    GPIO.setup(error_pin, GPIO.OUT, initial=GPIO.LOW) 
+    GPIO.setup(locomotion_pin, GPIO.OUT, initial=GPIO.LOW) 
+    GPIO.setup(vision_pin, GPIO.OUT, initial=GPIO.LOW)
+    GPIO.setup(endeffector_pin, GPIO.OUT, initial=GPIO.LOW) 
+
     system = System()
     while not rospy.is_shutdown():
         system.execute()

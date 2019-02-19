@@ -5,10 +5,12 @@ import rospy
 import json
 
 def handle_detect_target(req):
+    raw_input("Press ENTER to send target state")
     return DetectTargetResponse(json.dumps({'type':'valve', 'orientation':'up'}),0,0,0)
 
 def vision_node():
     rospy.init_node("vision_system")
+    rospy.loginfo("Vision system is running")
     s = rospy.Service("detect_target", DetectTarget, handle_detect_target)
     rospy.spin()
 
