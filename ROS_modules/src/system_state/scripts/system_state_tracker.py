@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
+import time
 import json
 import rospy
 from system_state.msg import *
 from system_state.srv import *
 
+import RPi.GPIO as GPIO
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
 
 class System:
     def __init__(self):
@@ -28,7 +32,9 @@ class System:
         rospy.loginfo("Initialized system")
         rospy.loginfo("System starting state: %s" % self.state)
         
-        
+	self.status_pin = 6
+	GPIO.setup(self.status_pin, GPIO.OUT, initial=GPIO.LOW)        
+
 
     def handle_button(self, data):
         if self.state == "PRE-OPERATION":
@@ -99,12 +105,20 @@ class System:
     def log_state_change(self, prev_state):
         rospy.loginfo('state change: %s -> %s' %(prev_state, self.state))
 
+    def pre_op_blink(self):
+	GPIO.output(self.status_pin, GPIO.HIGH)
+	time.sleep(.50)
+	GPIO.output(self.status_pin, GPIO.LOW)
+	time.sleep(.25)
+
     def execute(self):
         '''
         PRE-OPERATION state handling
         '''
         if self.state == "PRE-OPERATION":
+            GPIO.output(self.status_pin, GPIO.LOW)
             while not self.button_pressed:
+		self.pre_op_blink()
                 pass
             self.state = "LOADING_MISSION"
             self.button_pressed = False
@@ -118,6 +132,7 @@ class System:
                 self.state = "PRE-OPERATION"
             else:
                 self.state = "MISSION_STATUS_CHECK"
+                GPIO.output(self.status_pin, GPIO.HIGH)
             self.log_state_change("LOADING_MISSION")
 
         '''
