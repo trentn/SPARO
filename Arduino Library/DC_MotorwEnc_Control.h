@@ -1,7 +1,7 @@
 #ifndef DC_MotorwEnc_Control
 #define DC_MotorwEnc_Control
 
-#include "Encoder.h"
+#include <Encoder.h>
 
 class DC_Motor{
 public:
@@ -45,3 +45,4 @@ public:
 };
 
 #endif
+

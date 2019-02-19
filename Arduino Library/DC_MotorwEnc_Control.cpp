@@ -123,3 +123,4 @@ void DC_Motor::setPD_ang(double gains[2])
 	kp_ang = gains[0];
 	kd_ang = gains[1];
 }
+
