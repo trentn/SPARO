@@ -10,6 +10,49 @@ import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
+import threading
+
+class LED_thread(threading.Thread):
+    def __init__(self, mode):
+        self._stopevent = threading.Event()
+        self._sleepperiod = 1.0
+
+        if mode == 'pre-op':
+            self.blink = self.pre_op_blink
+        if mode == 'operation':
+            self.blink = self.operation
+
+        self.status_pin = 6
+	self.error_pin = 5
+	GPIO.setup(self.status_pin, GPIO.OUT, initial=GPIO.LOW)        
+	GPIO.setup(self.error_pin, GPIO.OUT, initial=GPIO.LOW) 
+
+        threading.Thread.__init__(self, name="LED %s"%mode)
+
+    def run(self):
+        while not self._stopevent.isSet():
+            self.blink()
+
+    def pre_op_blink(self):
+	GPIO.output(self.status_pin, GPIO.HIGH)
+	time.sleep(.50)
+	GPIO.output(self.status_pin, GPIO.LOW)
+	time.sleep(.25)
+
+    def loading_blink(self):
+        GPIO.output(self.status_pin, GPIO.HIGH)
+        time.sleep(.20)
+        GPIO.output(self.status_pin, GPIO.LOW)
+        time.sleep(.20)
+
+    def operation(self):
+        GPIO.output(self.status_pin, GPIO.HIGH)
+        self._stopevent.set()
+
+    def join(self, timeout=None):
+        self._stopevent.set()
+        threading.Thread.join(self,timeout)
+
 class System:
     def __init__(self):
         '''
@@ -30,12 +73,7 @@ class System:
         rospy.init_node('System')
         rospy.Subscriber("button_press", ButtonPress, self.handle_button)
         rospy.loginfo("Initialized system")
-        rospy.loginfo("System starting state: %s" % self.state)
-        
-	self.status_pin = 6
-	self.error_pin = 5
-	GPIO.setup(self.status_pin, GPIO.OUT, initial=GPIO.LOW)        
-	GPIO.setup(self.error_pin, GPIO.OUT, initial=GPIO.LOW)        
+        rospy.loginfo("System starting state: %s" % self.state)       
 
 
     def handle_button(self, data):
@@ -48,6 +86,8 @@ class System:
         try:
             get_mission = rospy.ServiceProxy('load_mission', LoadMission)
             self.mission = json.loads(get_mission().json_mission)
+            if not self.mission:
+                return False
             return True
         except rospy.ServiceException, e:
             rospy.loginfo("Service call failed: %s" % e)
@@ -107,24 +147,20 @@ class System:
     def log_state_change(self, prev_state):
         rospy.loginfo('state change: %s -> %s' %(prev_state, self.state))
 
-    def pre_op_blink(self):
-	GPIO.output(self.status_pin, GPIO.HIGH)
-	time.sleep(.50)
-	GPIO.output(self.status_pin, GPIO.LOW)
-	time.sleep(.25)
-
+    
     def execute(self):
         '''
         PRE-OPERATION state handling
         '''
         if self.state == "PRE-OPERATION":
-            GPIO.output(self.status_pin, GPIO.LOW)
+            led_thread = LED_thread("pre-op") 
+            led_thread.start()
             while not self.button_pressed:
-		self.pre_op_blink()
                 pass
             self.state = "LOADING_MISSION"
             self.button_pressed = False
             self.log_state_change("PRE-OPERATION")
+            led_thread.join()
 
         '''
         LOADING_MISSION state handling
@@ -134,13 +170,14 @@ class System:
                 self.state = "PRE-OPERATION"
             else:
                 self.state = "MISSION_STATUS_CHECK"
-                GPIO.output(self.status_pin, GPIO.HIGH)
             self.log_state_change("LOADING_MISSION")
 
         '''
         MISSION_STATUS_CHECK state handling
         '''
         if self.state == "MISSION_STATUS_CHECK":
+            led_thread = LED_thread("operation")
+            led_thread.start()
             if self.mission_complete():
                 self.state = "PRE-OPERATION"
             else:
@@ -198,8 +235,6 @@ class System:
         ERROR state handling
         '''
         if self.state == "ERROR":
-            GPIO.output(self.status_pin, GPIO.LOW)
-            GPIO.output(self.error_pin, GPIO.HIGH)
             rospy.loginfo("SPARO is in an ERROR state!!")
             raw_input("Press ENTER to kill")
             exit()
