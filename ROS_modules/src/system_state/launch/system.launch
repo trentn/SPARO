@@ -1,8 +1,8 @@
 <launch>
-    <node name="system_tracker" pkg="system_state" type="system_state_tracker.py"/>
+    <node name="system_tracker" pkg="system_state" type="system_state_tracker.py" output="screen"/>
     <node name="mission_parser" pkg="system_state" type="load_mission.py"/>
     <node name="vision_system" pkg = "system_state" type="vision_system.py"/>
     <node name="locomotion" pkg="system_state" type="locomotion.py"/>
     <node name="endeffector" pkg="system_state" type="end_effector.py"/>
-    <node name="button" pkg="system_state" type="button.py" output="screen"/>
+    <node name="button" pkg="system_state" type="button.py"/>
 </launch>

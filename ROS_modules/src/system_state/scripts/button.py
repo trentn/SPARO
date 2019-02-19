@@ -4,7 +4,7 @@ import rospy
 from system_state.msg import *
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(FALSE)
+GPIO.setwarnings(False)
 
 def button():
     pinButton=21
@@ -16,11 +16,9 @@ def button():
        # raw_input("Press 'B' to send button press")
         #
         #
-        if GPIO.input(21, GPIO.HIGH):
+        if GPIO.input(21) == GPIO.HIGH:
             press = ButtonPress("button pressed")
             pub.publish(press)
-        else:
-            GPIO.input(21, GPIO.LOW)
 
 if __name__ == '__main__':
     try:

@@ -31,8 +31,8 @@ class System:
         
 
     def handle_button(self, data):
-        rospy.loginfo("Received button press '%s'" % data)
         if self.state == "PRE-OPERATION":
+            rospy.loginfo("Received button press '%s'" % data)
             self.button_pressed = True
 
     def load_mission(self):
