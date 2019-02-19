@@ -183,7 +183,13 @@ class System:
             return False
 
     def set_target_to_desired(self):
-        return True
+        rospy.wait_for_service('set_target')
+        try:
+            set_target = rospy.ServiceProxy('set_target', SetTargetState)
+            return set_target().state_reached
+        except rospy.ServiceException, e:
+            rospy.loginfo("Service call failed: %s" %e)
+            return False
 
 
     def log_state_change(self, prev_state):
