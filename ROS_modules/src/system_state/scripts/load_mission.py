@@ -4,9 +4,8 @@ from system_state.srv import *
 import rospy
 import json
 
-mission = {}
-
 def handle_load_mission(req):
+    mission = {}
     s = raw_input("Load mission? [y/n]")
     if s[0] == 'y':
         mission['mission'] = 'loaded'

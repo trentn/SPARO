@@ -136,6 +136,9 @@ class System:
 
     def mission_complete(self):
         rospy.loginfo(str(self.mission))
+	s = raw_input("Mission complete? [y/n]")
+        if(s[0] == 'y'):
+            return True
         return False
 
     def set_next_target(self):
