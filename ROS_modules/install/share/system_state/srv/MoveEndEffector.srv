@@ -1,0 +1,5 @@
+int64 X
+int64 Y
+int64 Z
+---
+bool reached_position
