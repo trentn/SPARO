@@ -7,7 +7,34 @@
 using namespace std;
 using namespace cv;
 
-int main() {   
+struct HSV {
+    int low_H;
+    int high_H;
+    int low_S;
+    int high_S;
+    int low_V;
+    int high_V;
+};
+
+
+struct HSV blue     = {100, 110, 150, 255, 50, 255};
+struct HSV orange   = {0, 15, 150, 255, 100, 255};
+struct HSV teal     = {70, 130, 150, 255, 77, 255};
+
+struct HSV* target_color = &blue;
+
+int main(int argc, char** argv) {
+    if(argc > 1) {
+        switch(argv[1][0]) {
+            case 'b':   target_color = &blue;
+                        break;
+            case 'o':   target_color = &orange;
+                        break;
+            case 't':   target_color = &teal;
+                        break; 
+        }
+    }
+
     rs2::colorizer color_map;
     rs2::pipeline pipe;
     rs2::config cfg;
@@ -36,7 +63,9 @@ int main() {
     Mat depth(Size(640, 480), CV_8UC3, (void*)depth_frame.get_data(), Mat::AUTO_STEP);
 
     cvtColor(color, color_HSV, COLOR_BGR2HSV);
-    inRange(color_HSV, Scalar(70, 150, 77), Scalar(130, 255, 255), color_filtered);
+    inRange(color_HSV,
+            Scalar(target_color->low_H, target_color->low_S, target_color->low_V),
+            Scalar(target_color->high_H, target_color->high_S, target_color->high_V), color_filtered);
 
     Mat depth_filtered;
     bitwise_and(depth, depth.clone(), depth_filtered, color_filtered);
