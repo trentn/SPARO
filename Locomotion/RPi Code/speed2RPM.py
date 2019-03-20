@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 #####################################################################
 # motor layout                 +1-                                  #
 #                         -           +                             #
@@ -6,6 +6,12 @@ import numpy
 # ^y+                     +           -                             #
 # phi ccw+                     -3+                                  #
 #####################################################################
+
+#Note that absolute x and y movement is tied inherently with the phi position.
+#This function takes commands in the robots frame of reference
+
+## TODO: change this to use a kinematics matrix
+
 def  speed2RPM(dx,dy,dphi):
     wheel_d = .1524 #wheel diameter in meters (6")
     wheel_dist_per_rev = wheel_d*pi
@@ -22,39 +28,18 @@ def  speed2RPM(dx,dy,dphi):
     m3 = 0
     m4 = 0
 
-    dx   = 0 #in m/s
-    dy   = 0 #in m/s
-    dphi = 0 #in rad/s
-
-#create input in form dx,dy,dphi if made into function
-
     dx_max = max_rps*dist_per_rev #if all actuation resources are used for x movement
     dy_max = dx_max #inherently the same
     dphi_max = phi_rads_per_rev*max_rps #radians per second if all motors causing rotation
 
-#create a decoder for dx dy dphi to m1 m2 m3 m4
+    dstates = np.matrix([dx;dy;dphi])
+    kinematics_matrix = np.matrix([-1,0,outer_d/2],[0,-1,outer_d/2],[1,0,outer_d/2],[0,1,outer_d/2])/wheel_dist_per_rev*60 #local velocities to rpm
+    motor_rpms = kinematics_matrix*dstates
 
-#first need to allocate for dx and dy, which are completely independent
-
-    m3_x = dx/wheel_dist_per_rev*60
-    m1_x = -m3_x
-
-    m4_y = dy/wheel_dist_per_rev*60
-    m2_y = -m4_y
-
-#now need to calculate phi component
-
-    m1_phi = dphi/phi_rads_per_rev*60
-    m2_phi = dphi/phi_rads_per_rev*60
-    m3_phi = dphi/phi_rads_per_rev*60
-    m4_phi = dphi/phi_rads_per_rev*60
-
-#combine all together
-
-    m1 = m1_x + m1_phi
-    m2 = m2_y + m2_phi
-    m3 = m3_x + m3_phi
-    m4 = m4_y + m4_phi
+    m1 = motor_rpms(1)
+    m2 = motor_rpms(2)
+    m3 = motor_rpms(3)
+    m4 = motor_rpms(4)
 
 #check for over actuation
     scale_factor = 1
