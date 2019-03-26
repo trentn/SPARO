@@ -49,13 +49,14 @@ print "Serial initialized"
 def initialize_Arduino(): #intention is for function to run serial setup and send any parameters we want to arduino, for now only message frequency, maybe later different modes.
     print "initialize_Arduino entered"
     ser.write("Are you ready kids?,"+str(catch_rate)+"\n") #so far catch rate is the only thing this is concerned with but later we can add additional things to make arduino updates easier on the fly
+    print "Message sent"
     initalize_response = ser.readline()
     print "Read line captured"
     if repr(initalize_response) == repr("Aye aye captain!\r\n"):
         print "Response received"
         sendSpeeds = True
         catchSpeeds = True
-        print str(sendSpeeds) + " " + str(catchSpeeds)
+       #print str(sendSpeeds) + " " + str(catchSpeeds)
         time.sleep(2)
     else:
         print "Unexpected response " + repr(initalize_response) + initalize_response
@@ -83,12 +84,15 @@ def position_PID(): #desired xyphi speeds from the absolute frame determined her
 def send_Arduino(): #sends commands to arduino at a consitant rate
     print "In send thread " + str(sendSpeeds)
     while(sendSpeeds == True):
-        print "Send loop"
         position_PID()
         [m1,m2,m3,m4,scale_factor] = speed2RPM(dx,dy,dphi)
+        m1 = float(m1)
+        m2 = float(m2)
+        m3 = float(m3)
+        m4 = float(m4)
+        ser.write(str(m1)+","+str(m2)+","+str(m3)+","+str(m4)+"\n")
         print "Sending to arduino " + str(m1)+","+str(m2)+","+str(m3)+","+str(m4)
         #enter in scale_factor check --- not sure if this is important yet
-        ser.write(str(m1)+","+str(m2)+","+str(m3)+","+str(m4)+"\n")
         time.sleep(send_rate)
 
     return
@@ -97,27 +101,37 @@ def send_Arduino(): #sends commands to arduino at a consitant rate
 def catch_Arduino(): #thread function to catch arduino updates from serial
     print "In catch thread " + str(catchSpeeds)
     while(catchSpeeds == True):
-        print "catch loop"
         arduino_in = ser.readline() #formatting ("m1,m2,m3,m4,arduino_time")
-        print arduino_in
+        arduino_in.decode('latin-1')
+        print "catch loop received --- " + arduino_in
         input_vector = arduino_in.split(",")
-        #print len(input_vector)
+        print len(input_vector)
         for i in range(5):
             for j in reversed(range(1,3)):
 
                 RPM_history[i,j] = RPM_history[i,j-1]
+            print input_vector[i]
             RPM_history[i,0] = float(input_vector[i])
         #decode into current absolute speed and take current location using trapezoid integration
         temp_speed_local = inv_kinematics_matrix*RPM_history[0:4,:]
         temp_speed_abs = np.matrix([[math.cos(-current_location[2]),-math.sin(-current_location[2]),0],[math.sin(-current_location[2]),math.cos(-current_location[2]),0],[0,0,1]])*temp_speed_local
         current_location[:] = current_location[:] + .5*(temp_speed_abs[:,0]+temp_speed_abs[:,1])*(RPM_history[4,1]-RPM_history[4,0])
     return
+    print("Exited catch thread")
 
 def absolute2Local(dx_abs,dy_abs,dphi_abs): #takes in absolute reference velocities and decodes to robot frame and updates the global values
     dphi = dphi_abs
     dx = dx_abs*math.cos(current_location[2])-dy_abs*math.sin(current_location[2])
     dy = dx_abs*math.sin(current_location[2])+dy_abs*math.cos(current_location[2])
     return
+
+location_string = raw_input("Enter desired location: ")
+#possibly check for a reset command/closeout command etc...
+locations = location_string.split(',')
+desired_location[0] = float(locations[0])
+desired_location[1] = float(locations[1])
+desired_location[2] = float(locations[2])
+print desired_location[0]
 
 
 initialize_Arduino()
@@ -131,15 +145,8 @@ arduino_catch.start()
 arduino_send.start()
 
 while True: #main program loop
-    location_string = raw_input("Enter desired location: ")
-    #possibly check for a reset command/closeout command etc...
-    locations = location_string.split(',')
-    desired_location[0] = float(locations[0])
-    desired_location[1] = float(locations[1])
-    desired_location[2] = float(locations[2])
-    print desired_location[0]
-    if desired_location[0] == -999:
-        break
+    send_rate = True
+    catchSpeeds = True
 
 
 
