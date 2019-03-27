@@ -62,19 +62,6 @@ int main(int argc, char** argv) {
 
     color_frame = aligned_frames.get_color_frame();
     depth_frame = aligned_frames.get_depth_frame();
-
-    //color_frame = frames.get_color_frame();
-    //depth_frame = frames.get_depth_frame();
-
-
-    /*
-    //generate point cloud & get vertices
-    rs2::pointcloud pc;
-    rs2::points points = pc.calculate(depth_frame);
-    pc.map_to(color_frame);
-    auto vertices = points.get_vertices();
-    */
-
     
     //filter on color
     Mat color(Size(640, 480), CV_8UC3, (void*)color_frame.get_data(), Mat::AUTO_STEP);
@@ -85,28 +72,24 @@ int main(int argc, char** argv) {
             Scalar(target_color->low_H, target_color->low_S, target_color->low_V),
             Scalar(target_color->high_H, target_color->high_S, target_color->high_V), color_filtered);
 
+    //mask edges
+    Mat mask = Mat::zeros(Size(640,480), CV_8U);
+    mask(Rect(210,50,210,380)) = 255;
+    Mat color_masked;
+    bitwise_and(color_filtered, color_filtered.clone(), color_masked, mask);
+
     //Mat depth_filtered;
     //bitwise_and(depth, depth.clone(), depth_filtered, color_filtered);
 
 
     //get center of "blob"
-    Moments m = moments(color_filtered, true);
+    Moments m = moments(color_masked, true);
     Point p(m.m10/m.m00, m.m01/m.m00);
 
     circle(color, p, 5, Scalar(128,0,0), -1);
 
     //extract x,y,z
-    /*
-    auto centroid = vertices[p.x*p.y];
-    cout << "X:" << centroid.x
-         << " Y:" << centroid.y
-         << " Z:" << centroid.z
-         << endl;
-    */
-
-    
-    cout << depth.at<float>((int)p.x, (int)p.y) << endl;
-    
+    cout << depth.at<float>((int)p.x, (int)p.y) << endl;    
     cout << depth_frame.as<rs2::depth_frame>().get_distance((int)p.x,  (int)p.y) << endl;
 
     float threeD_point[3] = {0};
@@ -121,7 +104,8 @@ int main(int argc, char** argv) {
          << endl;
 
     imshow("Color Image", color);
-    imshow("Color Mask", color_filtered);
+    imshow("Color Mask", color_masked);
+    imshow("Mask", mask);
     //imshow("Depth Map", depth);
     //imshow("Filtered Depth", depth_filtered);
     
