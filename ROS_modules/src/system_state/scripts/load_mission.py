@@ -4,10 +4,14 @@ from system_state.srv import *
 import rospy
 import json
 
-mission = {'mission':'empty'}
-
 def handle_load_mission(req):
-    rospy.loginfo("Loading Mission")
+    mission = {}
+    s = raw_input("Load mission? [y/n]")
+    if s[0] == 'y':
+        mission['mission'] = 'loaded'
+    	rospy.loginfo("Loaded Mission")
+    else:
+	rospy.loginfo("Mission failed to load")
     return LoadMissionResponse(json.dumps(mission))
 
 def mission_loader():
