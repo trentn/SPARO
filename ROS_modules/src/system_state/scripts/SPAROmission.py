@@ -1,12 +1,12 @@
 #opening the mission file 
-#myfile=open("c:\\Users\\Houriyeh Majditehran\\Desktop\\Spring_2019\\hard.txt")
-#content = myfile.read()
-#eachline=content.splitlines()
+myfile=open("/media/usb/mission.txt")
+content = myfile.read()
+eachline=content.splitlines()
 
-eachline=['AV1 +180','FV3 1','CV1 +90','DA B1 U B2 D B3 D'] #for testing without file
+#eachline=['AV1 +180','FV3 1','CV1 +90','DA B1 U B2 D B3 D', '420'] #for testing without file
 
 mission = {"time": 0, "tasks": []}
-for j in range(len(eachline)):
+for j in range(len(eachline)-1):
     r1=eachline[j][0]
     if eachline[j][1]=="V" and eachline[j][2]=="1":
         r2='Gate Value'
@@ -54,5 +54,7 @@ for j in range(len(eachline)):
     else:
         result={"station":r1, "types":r2, "desiredPosition":r3}
     mission["tasks"].append(result)
+
+mission["time"] = int(eachline[j+1])
 
 print mission
