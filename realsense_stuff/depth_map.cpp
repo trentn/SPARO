@@ -8,6 +8,8 @@
 using namespace std;
 using namespace cv;
 
+void detect_target();
+
 struct HSV {
     int low_H;
     int high_H;
@@ -36,7 +38,14 @@ int main(int argc, char** argv) {
         }
     }
 
-    rs2::colorizer color_map;
+    detect_target();
+
+    return 0;
+}
+
+
+void detect_target(){
+        rs2::colorizer color_map;
     rs2::pipeline pipe;
     rs2::config cfg;
 
@@ -89,14 +98,45 @@ int main(int argc, char** argv) {
     circle(color, p, 5, Scalar(128,0,0), -1);
 
     //extract x,y,z
-    cout << depth.at<float>((int)p.x, (int)p.y) << endl;    
-    cout << depth_frame.as<rs2::depth_frame>().get_distance((int)p.x,  (int)p.y) << endl;
+    //cout << depth.at<float>((int)p.x, (int)p.y) << endl;    
+    //cout << depth_frame.as<rs2::depth_frame>().get_distance((int)p.x,  (int)p.y) << endl;
 
     float threeD_point[3] = {0};
     float pixel[2] = {p.x, p.y};
     //default depth scale is 1mm
     rs2_deproject_pixel_to_point(threeD_point, &c_intrinsics, pixel, depth_frame.as<rs2::depth_frame>().get_distance((int)p.x,  (int)p.y));
 
+    
+    
+    //bounding boxes
+    int thresh = 1;
+    RNG rng(12345);
+    Mat canny_output;
+    Canny(color_masked, canny_output, thresh, thresh);
+
+    vector<vector<Point>> contours;
+    findContours(canny_output, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+
+    vector<vector<Point>> contours_poly(contours.size());
+    vector<RotatedRect> rBoundingRect(contours.size());
+
+    for(int i = 0; i < contours.size(); i++) {
+        approxPolyDP(contours[i], contours_poly[i], 1, true);
+        rBoundingRect[i] = minAreaRect(contours_poly[i]);
+    }
+    
+    for(int i = 0; i < contours_poly.size(); i++){
+        Scalar bcolor = Scalar(rng.uniform(0,256), rng.uniform(0,256), rng.uniform(0,256));
+        drawContours(color, contours_poly, (int)i, bcolor);
+        Point2f vertices[4];
+        rBoundingRect[i].points(vertices);
+        for(int j = 0; j < 4; j++){
+            line(color, vertices[j], vertices[(j+1)%4], bcolor, 2);
+        }
+    }
+    cout << contours.size() << endl;
+    cout << contours_poly.size() << endl;
+    
     
     cout << "X: " << threeD_point[0]
          << " Y: " << threeD_point[1]
@@ -110,6 +150,4 @@ int main(int argc, char** argv) {
     //imshow("Filtered Depth", depth_filtered);
     
     waitKey(0);
-
-    return 0;
 }
