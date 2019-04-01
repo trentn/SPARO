@@ -163,7 +163,7 @@ class System:
         rospy.wait_for_service('detect_target')
         try:
             detect_target = rospy.ServiceProxy('detect_target', DetectTarget)
-            target_info = detect_target()
+            target_info = detect_target(0)
             self.target['position'] = {}
             self.target['position']['X'] = target_info.X
             self.target['position']['Y'] = target_info.Y

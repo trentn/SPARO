@@ -1,0 +1,3 @@
+string json_desiredstate
+---
+int8 state_reached

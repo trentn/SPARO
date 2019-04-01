@@ -1,0 +1,5 @@
+---
+string json_state
+int64 X
+int64 Y
+int64 Z
