@@ -1,4 +1,5 @@
 import numpy as np
+import math
 #####################################################################
 # motor layout                 +1-                                  #
 #                         -           +                             #
@@ -14,7 +15,7 @@ import numpy as np
 
 def  speed2RPM(dx,dy,dphi):
     wheel_d = .1524 #wheel diameter in meters (6")
-    wheel_dist_per_rev = wheel_d*pi
+    wheel_dist_per_rev = wheel_d*math.pi
     outer_d = .6096 #diameter of outer robot in meters (2')
 
     min_rpm = 0 #to be updated if I find if there is an actuation minimum
@@ -28,18 +29,18 @@ def  speed2RPM(dx,dy,dphi):
     m3 = 0
     m4 = 0
 
-    dx_max = max_rps*dist_per_rev #if all actuation resources are used for x movement
+    dx_max = max_rps*wheel_dist_per_rev #if all actuation resources are used for x movement
     dy_max = dx_max #inherently the same
     dphi_max = phi_rads_per_rev*max_rps #radians per second if all motors causing rotation
 
-    dstates = np.matrix([dx;dy;dphi])
-    kinematics_matrix = np.matrix([-1,0,outer_d/2],[0,-1,outer_d/2],[1,0,outer_d/2],[0,1,outer_d/2])/wheel_dist_per_rev*60 #local velocities to rpm
+    dstates = np.matrix([[dx],[dy],[dphi]])
+    kinematics_matrix = np.matrix([[-1,0,outer_d/2],[0,-1,outer_d/2],[1,0,outer_d/2],[0,1,outer_d/2]])/wheel_dist_per_rev*60 #local velocities to rpm
     motor_rpms = kinematics_matrix*dstates
 
-    m1 = motor_rpms(1)
-    m2 = motor_rpms(2)
-    m3 = motor_rpms(3)
-    m4 = motor_rpms(4)
+    m1 = motor_rpms[0]
+    m2 = motor_rpms[1]
+    m3 = motor_rpms[2]
+    m4 = motor_rpms[3]
 
 #check for over actuation
     scale_factor = 1
@@ -53,3 +54,4 @@ def  speed2RPM(dx,dy,dphi):
         m4 = scale_factor*m4
     #this should allow for the same overall trajectory at overall slower speeds
     return [m1,m2,m3,m4,scale_factor] #return speeds with scale factor to acknowledge changes no scaling if =1
+
