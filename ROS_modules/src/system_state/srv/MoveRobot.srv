@@ -1,4 +1,5 @@
-int64 X
-int64 Y
+float64 X
+float64 Y
+float64 phi
 ---
 bool reached_position
