@@ -11,8 +11,10 @@ import time
 import numpy as np
 import math 
 
-from system_state.srv import *
+from system_state.msg import *
 import rospy
+
+pub = rospy.Publisher("at_location", AtLocation, queue_size=1)
 
 #eventually this program will send encoder data up to the localization
 #hub and receive its predicted current_location from said hub.
@@ -22,7 +24,7 @@ import rospy
 
 print "program started"
 
-error_threshold = np.matrix([[.01],[.01],[1/180*math.pi]]) #How close we try to get to final position
+error_threshold = np.matrix([[.01],[.01],[1.0/180.0*math.pi]]) #How close we try to get to final position
 
 at_location = False
 
@@ -75,7 +77,7 @@ def initialize_Arduino(): #intention is for function to run serial setup and sen
     return
 
 def position_PID(): #desired xyphi speeds from the absolute frame determined here
-
+    check_Error()
     #pushes back position error history
     for i in range(4):
         for j in reversed(range(1,3)):
@@ -98,11 +100,19 @@ def position_PID(): #desired xyphi speeds from the absolute frame determined her
 
 def check_Error():
     #rospy.loginfo("checking error")
-    if( abs(position_error[0,0])<error_threshold[0] and abs(position_error[1,0]) < error_threshold[1] and  abs(position_error[2,0]) < error_threshold[2] ):
+    #rospy.loginfo(str(abs(position_error[2,0]))+"<"+str(error_threshold[2,0])+"="+str(abs(position_error[2,0]) < error_threshold[2,0]))
+    if( abs(position_error[0,0]) < error_threshold[0,0] and abs(position_error[1,0]) < error_threshold[1,0] and abs(position_error[2,0]) < error_threshold[2,0] ):
         at_location = True
+        try:
+            pub.publish(AtLocation(True))
+        except Exception:
+            pass
     else:
-        at_location = False   
-   
+        at_location = False
+        try:
+            pub.publish(AtLocation(False))
+        except Exception:
+            pass   
     return
 
 def send_Arduino(): #sends commands to arduino at a consitant rate
@@ -186,35 +196,17 @@ def absolute2Local(dx_abs,dy_abs,dphi_abs): #takes in absolute reference velocit
 
     return [dx,dy,dphi]
 
-def handle_move_robot(req):
-    input = raw_input(">")
-    input = input.split(",")
+def handle_move_robot(des_loc):
+    desired_location[0,0] = float(des_loc.X)
+    desired_location[1,0] = float(des_loc.Y)
+    desired_location[2,0] = float(des_loc.phi)
 
-    at_location = False
-
-    desired_location[0,0] = float(input[0])
-    desired_location[1,0] = float(input[1])
-    desired_location[2,0] = float(input[2])
-
-
-    #desired_location[0,0] = float(req.X)
-    #desired_location[1,0] = float(req.Y)
-    #desired_location[2,0] = float(req.phi)
-
-    #rospy.loginfo("X:%f Y:%f PHI:%f" %(req.X, req.Y, req.phi))
-    
-    # while True:
-    #     check_Error()
-    #     if at_location == True:
-    #         time.sleep(1)
-    #         check_Error()
-    #         if at_location == True:
-    #             return MoveRobotResponse(True)
+    rospy.loginfo("X:%f Y:%f PHI:%f" %(des_loc.X, des_loc.Y, des_loc.phi))
 
 def locomotion_node():
     rospy.init_node("locomotion")
     rospy.loginfo("Locomotion system is running")
-    s = rospy.Service("move_robot", MoveRobot, handle_move_robot)
+    s = rospy.Subscriber("move_commands", MoveCommand, handle_move_robot)
     rospy.spin()
 
 if __name__ == "__main__":
@@ -225,9 +217,7 @@ if __name__ == "__main__":
     arduino_catch.start()
     arduino_send.start()
 
-    while True:
-        handle_move_robot(None);
-    #locomotion_node()
+    locomotion_node()
 
     sendSpeeds = False
     catchSpeeds = False

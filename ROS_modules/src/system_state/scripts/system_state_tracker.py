@@ -107,6 +107,7 @@ class System:
                        "SET_TARGET_STATE"]
         '''
         self.button_pressed = False
+        self.move_complete = False
         self.state = "PRE-OPERATION"
         self.mission = {}
         self.target = {}
@@ -114,6 +115,8 @@ class System:
 
         rospy.init_node('System')
         rospy.Subscriber("button_press", ButtonPress, self.handle_button)
+        rospy.Subscriber("at_location", AtLocation, self.handle_at_location)
+        self.move_commands = rospy.Publisher("move_commands", MoveCommand, queue_size=1)
         rospy.loginfo("Initialized system")
         rospy.loginfo("System starting state: %s" % self.state)       
 
@@ -122,6 +125,13 @@ class System:
         if self.state == "PRE-OPERATION":
             rospy.loginfo("Received button press '%s'" % data)
             self.button_pressed = True
+
+    def handle_at_location(self, data):
+        if self.state == "MOVE_ROBOT":
+            if data.at_location == True:
+                self.move_complete = True
+            else:
+                pass
 
     def load_mission(self):
         rospy.wait_for_service('load_mission')
@@ -145,16 +155,15 @@ class System:
         '''
         TODO: set this from mission 
         '''
-        self.target = {'location': {'X':0, 'Y':0}}
+        self.target = {'location': {'X':1, 'Y':1}}
 
     def move_to_next_target(self):
-        rospy.wait_for_service('move_robot')
-        try:
-            move_robot = rospy.ServiceProxy('move_robot', MoveRobot)
-            return move_robot(self.target['location']['X'], self.target['location']['Y']).reached_position
-        except rospy.ServiceException, e:
-            rospy.loginfo("Service call failed: %s" % e)
-            return False
+        self.move_complete = False
+        self.move_commands.publish(MoveCommand(self.target['location']['X'], self.target['location']['X'], 0))
+        time.sleep(3)
+        while not self.move_complete:
+            pass
+        return True
 
     def detect_target_state_position(self):
         '''
