@@ -32,8 +32,8 @@ outer_d = .4570
 wheel_d = .1524 #wheel diameter in meters (6")
 wheel_dist_per_rev = wheel_d*math.pi
 
-current_location = np.matrix([[0.0],[0.0],[0.0]]) #x(m) y(m) phi(rad) since program start
-desired_location = np.matrix([[0.0],[0.0],[0.0]]) #same formatting as current_location
+current_location = np.matrix([[0.224],[0.224],[0.0]]) #x(m) y(m) phi(rad) since program start
+desired_location = np.matrix([[0.224],[0.224],[0.0]]) #same formatting as current_location
 catchSpeeds = True
 sendSpeeds = True
 
@@ -47,7 +47,7 @@ ang_vel_log = open("desired_vel.log", 'w', buffering=1)
 position_error = np.matrix(np.zeros((4,3))) #x/y/phi/time,timestep
 RPM_history = np.matrix(np.zeros((5,3))) #m1/m2/m3/m4/time,timestep
 
-kinematics_matrix = np.matrix([[1.0,0.,outer_d/2],[0.,1.,outer_d/2.],[-1.,0.,outer_d/2.],[0.,-1.,outer_d/2.]])/wheel_dist_per_rev*60
+kinematics_matrix = np.matrix([[-1.0,0.,outer_d/2],[0.,-1.,outer_d/2.],[1.,0.,outer_d/2.],[0.,1.,outer_d/2.]])/wheel_dist_per_rev*60
 inv_kinematics_matrix = np.linalg.pinv(kinematics_matrix)
 
 xy_gains = np.matrix([[1],[0.]]) #kp,kd no forseeable reason for x and y to have seperate gains

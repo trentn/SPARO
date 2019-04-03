@@ -34,7 +34,7 @@ def  speed2RPM(dx,dy,dphi):
     dphi_max = phi_rads_per_rev*max_rps #radians per second if all motors causing rotation
 
     dstates = np.matrix([[dx],[dy],[dphi]])
-    kinematics_matrix = np.matrix([[1,0,outer_d/2],[0,1,outer_d/2],[-1,0,outer_d/2],[0,-1,outer_d/2]])/wheel_dist_per_rev*60 #local velocities to rpm
+    kinematics_matrix = np.matrix([[-1,0,outer_d/2],[0,-1,outer_d/2],[1,0,outer_d/2],[0,1,outer_d/2]])/wheel_dist_per_rev*60 #local velocities to rpm
     motor_rpms = kinematics_matrix*dstates
 
     m1 = motor_rpms[0]

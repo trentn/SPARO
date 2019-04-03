@@ -111,7 +111,8 @@ class System:
         self.state = "PRE-OPERATION"
         self.mission = {}
         self.target = {}
-
+        self.task = 0
+        self.num_tasks = 0
 
         rospy.init_node('System')
         rospy.Subscriber("button_press", ButtonPress, self.handle_button)
@@ -140,26 +141,23 @@ class System:
             self.mission = json.loads(get_mission().json_mission)
             if not self.mission:
                 return False
+            rospy.loginfo(str(self.mission))
+            self.num_tasks = len(self.mission['tasks'])
             return True
         except rospy.ServiceException, e:
             rospy.loginfo("Service call failed: %s" % e)
 
     def mission_complete(self):
-        rospy.loginfo(str(self.mission))
-        s = raw_input("Mission complete? [y/n]")
-        if(s[0] == 'y'):
-            return True
-        return False
+        return self.task >= self.num_tasks
 
     def set_next_target(self):
-        '''
-        TODO: set this from mission 
-        '''
-        self.target = {'location': {'X':1, 'Y':1}}
+        self.target = self.mission['tasks'][self.task]
+        self.task += 1
 
     def move_to_next_target(self):
         self.move_complete = False
-        self.move_commands.publish(MoveCommand(self.target['location']['X'], self.target['location']['X'], 0))
+        self.move_commands.publish(MoveCommand(self.target['station'][0], self.target['station'][1], 0))
+        rospy.loginfo("Moving to %f,%f" % (self.target['station'][0],self.target['station'][1]))
         time.sleep(3)
         while not self.move_complete:
             pass

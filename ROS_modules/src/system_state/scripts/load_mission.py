@@ -4,6 +4,15 @@ from system_state.srv import *
 import rospy
 import json
 
+locations = {'A':(1.38,.33),
+             'B':(1.075,.33),
+             'C':(0.77,0.33),
+             'D':(0.465,0.33),
+             'E':(0.33,0.33),
+             'F':(0.33,0.33),
+             'G':(0.33,0.425),
+             'H':(0.33,'0.73')}
+
 def handle_load_mission(req):
 	#opening the mission file 
     mission = {}
@@ -14,7 +23,7 @@ def handle_load_mission(req):
         eachline=content.splitlines()
         mission["tasks"] = []
         for j in range(len(eachline)-1):
-            r1=eachline[j][0]
+            r1=locations[eachline[j][0]]
             if eachline[j][1]=="V" and eachline[j][2]=="1":
                 r2='Gate Value'
                 r3=eachline[j][4:]
