@@ -65,6 +65,8 @@ String* initialize_string[2] = {&initialize_code, &send_rate_string};
 bool stringComplete = false;  // whether the string is complete
 
 void setup() {
+  Serial.flush();
+  Serial.end();
   initialized = false;
   s_index = 0;
   stringComplete = false;
@@ -106,8 +108,8 @@ void setup() {
   pinMode(m4in2, OUTPUT);
   pinMode(m1in1, OUTPUT);
 
-
   Serial.begin(9600);
+  
   initializeStates();
   updateStates();
   delay(100);
