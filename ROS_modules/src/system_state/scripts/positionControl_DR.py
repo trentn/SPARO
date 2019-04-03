@@ -30,8 +30,8 @@ outer_d = .4570
 wheel_d = .1524 #wheel diameter in meters (6")
 wheel_dist_per_rev = wheel_d*math.pi
 
-current_location = np.matrix([[0.0],[0.],[0.]]) #x(m) y(m) phi(rad) since program start
-desired_location = np.matrix([[0.0],[0.],[0.]]) #same formatting as current_location
+current_location = np.matrix([[0.0],[0.0],[0.0]]) #x(m) y(m) phi(rad) since program start
+desired_location = np.matrix([[0.0],[0.0],[0.0]]) #same formatting as current_location
 catchSpeeds = True
 sendSpeeds = True
 
@@ -51,9 +51,10 @@ inv_kinematics_matrix = np.linalg.pinv(kinematics_matrix)
 xy_gains = np.matrix([[1],[0.]]) #kp,kd no forseeable reason for x and y to have seperate gains
 phi_gains = np.matrix([[.5],[0.]]) #kp,kd for phi
 send_rate = .05 #rate of data transfer to arduino. used in send_Arduino thread
-catch_rate = .01 #rate the Arduino should send to the RPi
+catch_rate = .05 #rate the Arduino should send to the RPi
 
 ser = serial.Serial("/dev/ttyACM0", 9600)
+ser.flush()
 
 print "Serial initialized"
 
@@ -96,7 +97,7 @@ def position_PID(): #desired xyphi speeds from the absolute frame determined her
     return [dx,dy,dphi]
 
 def check_Error():
-
+    #rospy.loginfo("checking error")
     if( abs(position_error[0,0])<error_threshold[0] and abs(position_error[1,0]) < error_threshold[1] and  abs(position_error[2,0]) < error_threshold[2] ):
         at_location = True
     else:
@@ -147,23 +148,25 @@ def catch_Arduino(): #thread function to catch arduino updates from serial
         arduino_in.decode('latin-1')
         rlog.write(arduino_in)
         input_vector = arduino_in.split(",")
+        if(len(input_vector) == 5):
 
-        for i in range(5):
-            for j in reversed(range(1,3)):
+            for i in range(5):
+                for j in reversed(range(1,3)):
+                    RPM_history[i,j] = RPM_history[i,j-1]
+                RPM_history[i,0] = float(input_vector[i])
 
-                RPM_history[i,j] = RPM_history[i,j-1]
+            temp_speed_local = inv_kinematics_matrix*RPM_history[0:4,:]
+            temp_speed_abs = np.matrix([[math.cos(-current_location[2,0]),-math.sin(-current_location[2,0]),0],[math.sin(-current_location[2,0]),math.cos(-current_location[2,0]),0],[0,0,1]])*temp_speed_local
+            current_location[:,0] = current_location[:,0] - .5*(temp_speed_abs[:,0]+temp_speed_abs[:,1])*(RPM_history[4,1]-RPM_history[4,0])
+        else:
+            print(input_vector)
 
-            RPM_history[i,0] = float(input_vector[i])
-
-        temp_speed_local = inv_kinematics_matrix*RPM_history[0:4,:]
-        temp_speed_abs = np.matrix([[math.cos(-current_location[2]),-math.sin(-current_location[2]),0],[math.sin(-current_location[2]),math.cos(-current_location[2]),0],[0,0,1]])*temp_speed_local
-        current_location[:] = current_location[:] - .5*(temp_speed_abs[:,0]+temp_speed_abs[:,1])*(RPM_history[4,1]-RPM_history[4,0])
-        loc_log.write(str(float(current_location[0]))+",")
-        loc_log.write(str(float(current_location[1]))+",")
-        loc_log.write(str(float(current_location[2]))+",")
-        loc_log.write(str(float(desired_location[0]))+",")
-        loc_log.write(str(float(desired_location[1]))+",")
-        loc_log.write(str(float(desired_location[2]))+",")
+        loc_log.write(str(float(current_location[0,0]))+",")
+        loc_log.write(str(float(current_location[1,0]))+",")
+        loc_log.write(str(float(current_location[2,0]))+",")
+        loc_log.write(str(float(desired_location[0,0]))+",")
+        loc_log.write(str(float(desired_location[1,0]))+",")
+        loc_log.write(str(float(desired_location[2,0]))+",")
         loc_log.write(str(float(position_error[0,0]))+",")
         loc_log.write(str(float(position_error[1,0]))+",")
         loc_log.write(str(float(position_error[2,0]))+",")
@@ -174,8 +177,8 @@ def catch_Arduino(): #thread function to catch arduino updates from serial
 
 def absolute2Local(dx_abs,dy_abs,dphi_abs): #takes in absolute reference velocities and decodes to robot frame and updates the global values
     dphi = dphi_abs
-    dx = dx_abs*math.cos(current_location[2])-dy_abs*math.sin(current_location[2])
-    dy = dx_abs*math.sin(current_location[2])+dy_abs*math.cos(current_location[2])
+    dx = dx_abs*math.cos(current_location[2,0])-dy_abs*math.sin(current_location[2,0])
+    dy = dx_abs*math.sin(current_location[2,0])+dy_abs*math.cos(current_location[2,0])
     
     dphi = float(dphi)
     dx = float(dx)
@@ -184,22 +187,29 @@ def absolute2Local(dx_abs,dy_abs,dphi_abs): #takes in absolute reference velocit
     return [dx,dy,dphi]
 
 def handle_move_robot(req):
+    input = raw_input(">")
+    input = input.split(",")
 
     at_location = False
 
-    desired_location[0] = float(req.X)
-    desired_location[1] = float(req.Y)
-    desired_location[2] = float(req.phi)
+    desired_location[0,0] = float(input[0])
+    desired_location[1,0] = float(input[1])
+    desired_location[2,0] = float(input[2])
 
-    rospy.loginfo("X:%f Y:%f PHI:%f" %(req.X, req.Y, req.phi))
+
+    #desired_location[0,0] = float(req.X)
+    #desired_location[1,0] = float(req.Y)
+    #desired_location[2,0] = float(req.phi)
+
+    #rospy.loginfo("X:%f Y:%f PHI:%f" %(req.X, req.Y, req.phi))
     
-    while True:
-        check_Error()
-        if at_location == True:
-            time.sleep(1)
-            check_Error()
-            if at_location == True:
-                return MoveRobotResponse(True)
+    # while True:
+    #     check_Error()
+    #     if at_location == True:
+    #         time.sleep(1)
+    #         check_Error()
+    #         if at_location == True:
+    #             return MoveRobotResponse(True)
 
 def locomotion_node():
     rospy.init_node("locomotion")
@@ -215,7 +225,9 @@ if __name__ == "__main__":
     arduino_catch.start()
     arduino_send.start()
 
-    locomotion_node()
+    while True:
+        handle_move_robot(None);
+    #locomotion_node()
 
     sendSpeeds = False
     catchSpeeds = False
