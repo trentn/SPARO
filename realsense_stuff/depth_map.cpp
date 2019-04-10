@@ -76,14 +76,18 @@ void detect_target(){
     Mat color(Size(640, 480), CV_8UC3, (void*)color_frame.get_data(), Mat::AUTO_STEP);
     Mat depth(Size(640, 480), CV_8UC3, (void*)depth_frame.get_data(), Mat::AUTO_STEP);
 
+    imwrite("./images/color.jpg", color);
+
     cvtColor(color, color_HSV, COLOR_BGR2HSV);
+    imwrite("./images/color_HSV.jpg", color_HSV);
+    
     inRange(color_HSV,
             Scalar(target_color->low_H, target_color->low_S, target_color->low_V),
             Scalar(target_color->high_H, target_color->high_S, target_color->high_V), color_filtered);
 
     //mask edges
     Mat mask = Mat::zeros(Size(640,480), CV_8U);
-    mask(Rect(210,50,210,380)) = 255;
+    mask(Rect(150,50,340,380)) = 255;
     Mat color_masked;
     bitwise_and(color_filtered, color_filtered.clone(), color_masked, mask);
 

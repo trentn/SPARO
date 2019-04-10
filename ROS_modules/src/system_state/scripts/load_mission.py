@@ -11,7 +11,7 @@ locations = {'A':(1.38,.33),
              'E':(0.33,0.33),
              'F':(0.33,0.33),
              'G':(0.33,0.425),
-             'H':(0.33,'0.73')}
+             'H':(0.33,0.73)}
 
 def handle_load_mission(req):
 	#opening the mission file 
