@@ -26,13 +26,13 @@ tags = {0: 'B000',
 
 
 def load_model():
-	json_file = open('./tensorflow_models/sparo_model.json','r')
+	json_file = open('/home/ubuntu/SPARO/tensorflow_models/sparo_model.json','r')
 	model_json = json_file.read()
 	json_file.close()
 
 	global model
 	model = keras.models.model_from_json(model_json)
-	model.load_weights('./tensorflow_models/sparo_model_weights.h5')
+	model.load_weights('/home/ubuntu/SPARO/tensorflow_models/sparo_model_weights.h5')
 	print("model loaded from file")
 
 	model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])

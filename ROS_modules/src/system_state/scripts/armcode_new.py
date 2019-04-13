@@ -3,10 +3,11 @@
 import numpy as np
 import math
 import time
-#import rospy
+import rospy
 import hebi
 import threading
 
+from system_state.msg import *
 
 arm_log = open("arm_log.log",'w',buffering=1)
 at_angle = False
@@ -59,12 +60,9 @@ def command_HEBIs():
     print("exited hebi loop")
     return
 
-HEBI_thread = threading.Thread(target=command_HEBIs,args=())
-HEBI_thread.start()
 
-while True:
-    position_string = raw_input("Enter desired position: ")
-    positions = position_string.split(',')
+def handle_move_endeffector(req):
+    positions = (req.height,req.end_effector_angle,req.arm_base_angle)
     z = float(positions[0])
     end_angle = float(positions[1])/180.0*math.pi
 
@@ -77,9 +75,19 @@ while True:
 
         print(desired_angles[0]*180/math.pi)
         print(desired_angles[1])
-    
-    if(desired_angles[0] == -999./180*math.pi):
-        break
 
-HEBI_talk = False
-HEBI_thread.join()
+def arm_node():
+    rospy.init_node("arm_node")
+    rospy.loginfo("End Effector system is running")
+    s = rospy.Subscriber("move_endeffector", MoveArm, handle_move_endeffector)
+    rospy.spin()
+
+
+if __name__ == "__main__":
+    HEBI_thread = threading.Thread(target=command_HEBIs,args=())
+    HEBI_thread.start()
+
+    arm_node()
+
+    HEBI_talk = False
+    HEBI_thread.join()

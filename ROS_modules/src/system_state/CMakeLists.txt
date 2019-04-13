@@ -53,6 +53,7 @@ add_message_files(
   ButtonPress.msg
   MoveCommand.msg
   AtLocation.msg
+  MoveArm.msg
 )
 
 ## Generate services in the 'srv' folder

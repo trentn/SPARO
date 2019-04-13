@@ -17,7 +17,7 @@ def handle_set_target(req):
 def endeffector_node():
     rospy.init_node("endeffector")
     rospy.loginfo("End Effector system is running")
-    s = rospy.Service("move_endeffector", MoveEndEffector, handle_move_endeffector)
+    #s = rospy.Service("move_endeffector", MoveEndEffector, handle_move_endeffector)
     s1 = rospy.Service("set_target", SetTargetState, handle_set_target)
     rospy.spin()
 

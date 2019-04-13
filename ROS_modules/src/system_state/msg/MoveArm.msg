@@ -1,0 +1,3 @@
+float64 height
+float64 end_effector_angle
+float64 arm_base_angle

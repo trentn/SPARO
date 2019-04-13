@@ -141,7 +141,7 @@ bool detect_target(system_state::DetectTarget::Request &req,
         return false;
     }
 
-    ROS_INFO("orientation: %s" res.orientation_state);
+    ROS_INFO("orientation: %s", res.orientation_state);
 
     return true;
 }
