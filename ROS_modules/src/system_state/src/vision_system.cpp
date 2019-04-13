@@ -1,6 +1,7 @@
 // include ros related header
 #include "ros/ros.h"
 #include "system_state/DetectTarget.h"
+#include "system_state/GetOrientation.h"
 
 // include the librealsense C++ header file
 #include <librealsense2/rs.hpp>
@@ -117,33 +118,6 @@ bool detect_target(system_state::DetectTarget::Request &req,
     float threeD_point[3] = {0};
     float pixel[2] = {p.x, p.y};
     rs2_deproject_pixel_to_point(threeD_point, &c_intrinsics, pixel, depth_frame.as<rs2::depth_frame>().get_distance((int)p.x,  (int)p.y));
-
-    //bounding boxes
-    /*int thresh = 1;
-    RNG rng(12345);
-    Mat canny_output;
-    Canny(color_masked, canny_output, thresh, thresh);
-
-    vector<vector<Point>> contours;
-    findContours(canny_output, contours, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-
-    vector<vector<Point>> contours_poly(contours.size());
-    vector<RotatedRect> rBoundingRect(contours.size());
-
-    for(int i = 0; i < contours.size(); i++) {
-        approxPolyDP(contours[i], contours_poly[i], 1, true);
-        rBoundingRect[i] = minAreaRect(contours_poly[i]);
-    }
-    
-    for(int i = 0; i < contours_poly.size(); i++){
-        Scalar bcolor = Scalar(rng.uniform(0,256), rng.uniform(0,256), rng.uniform(0,256));
-        drawContours(color, contours_poly, (int)i, bcolor);
-        Point2f vertices[4];
-        rBoundingRect[i].points(vertices);
-        for(int j = 0; j < 4; j++){
-            line(color, vertices[j], vertices[(j+1)%4], bcolor, 2);
-        }
-    }*/
     
     res.X = threeD_point[0];
     res.Y = threeD_point[1];
@@ -152,6 +126,22 @@ bool detect_target(system_state::DetectTarget::Request &req,
     ROS_INFO("X: %f; Y: %f; Z: %f", res.X, res.Y, res.Z);
     ROS_INFO("X: %f; Y: %f; Z: %f", threeD_point[0], threeD_point[1], threeD_point[2]);
     
+    imwrite("/opt/sparo_vision/target.jpg", color);
+
+    ros::NodeHandle n;
+    ros::ServiceClient client = n.serviceClient<system_state::GetOrientation>("get_orientation");
+
+    system_state::GetOrientation srv;
+    if(client.call(srv)) {
+        ROS_INFO("Orientation returned: %s", srv.response.orientation);
+        res.orientation_state = srv.response.orientation;
+    }
+    else {
+        ROS_INFO("Failed to call service get_orientation");
+        return false;
+    }
+
+    ROS_INFO("orientation: %s" res.orientation_state);
 
     return true;
 }

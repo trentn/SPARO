@@ -63,6 +63,7 @@ add_service_files(
   MoveEndEffector.srv
   SetTargetState.srv
   MoveRobot.srv
+  GetOrientation.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -156,7 +157,7 @@ add_dependencies(vision_system system_state_gencpp)
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(vision_system ${catkin_LIBRARIES} realsense2 opencv_core opencv_imgproc)
+target_link_libraries(vision_system ${catkin_LIBRARIES} realsense2 opencv_core opencv_imgproc opencv_highgui)
 
 #############
 ## Install ##
