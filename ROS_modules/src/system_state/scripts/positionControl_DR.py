@@ -55,25 +55,31 @@ phi_gains = np.matrix([[.5],[0.]]) #kp,kd for phi
 send_rate = .05 #rate of data transfer to arduino. used in send_Arduino thread
 catch_rate = .05 #rate the Arduino should send to the RPi
 
-ser = serial.Serial("/dev/ttyACM0", 9600)
+ser = serial.Serial("/dev/ttyACM0", 9600, timeout=1)
 ser.flush()
 
 print "Serial initialized"
 
 def initialize_Arduino(): #intention is for function to run serial setup and send any parameters we want to arduino, for now only message frequency, maybe later different modes.
     print "initialize_Arduino entered"
-    ser.write("Are you ready kids?,"+str(catch_rate)+"\n") #so far catch rate is the only thing this is concerned with but later we can add additional things to make arduino updates easier on the fly
-    print "Message sent"
-    initalize_response = ser.readline()
-    print "Read line captured"
-    if repr(initalize_response) == repr("Aye aye captain!\r\n"):
-        print "Response received"
-        sendSpeeds = True
-        catchSpeeds = True
-       #print str(sendSpeeds) + " " + str(catchSpeeds)
-        time.sleep(2)
-    else:
-        print "Unexpected response " + repr(initalize_response) + initalize_response
+    ser.write("-999\n")
+    time.sleep(.25)
+    ser.flush()
+    while True:
+        ser.write("Are you ready kids?,"+str(catch_rate)+"\n") #so far catch rate is the only thing this is concerned with but later we can add additional things to make arduino updates easier on the fly
+        print "Message sent"
+        initalize_response = ser.readline()
+        print "Read line captured"
+        if repr(initalize_response) == repr("Aye aye captain!\r\n"):
+            print "Response received"
+            sendSpeeds = True
+            catchSpeeds = True
+            #print str(sendSpeeds) + " " + str(catchSpeeds)
+            time.sleep(2)
+            break
+        else:
+            print "Unexpected response " + repr(initalize_response) + initalize_response
+    print "Arduino initialized successfully... we think...\n"
     return
 
 def position_PID(): #desired xyphi speeds from the absolute frame determined here
