@@ -26,7 +26,8 @@ print "program started"
 
 error_threshold = np.matrix([[.01],[.01],[1.0/180.0*math.pi]]) #How close we try to get to final position
 
-at_location = False
+global sent
+sent = True
 
 outer_d = .4570
 wheel_d = .1524 #wheel diameter in meters (6")
@@ -55,7 +56,7 @@ phi_gains = np.matrix([[.5],[0.]]) #kp,kd for phi
 send_rate = .05 #rate of data transfer to arduino. used in send_Arduino thread
 catch_rate = .05 #rate the Arduino should send to the RPi
 
-ser = serial.Serial("/dev/ttyACM0", 9600, timeout=1)
+ser = serial.Serial("/dev/ttyACM0", 9600, timeout=5)
 ser.flush()
 
 print "Serial initialized"
@@ -83,7 +84,6 @@ def initialize_Arduino(): #intention is for function to run serial setup and sen
     return
 
 def position_PID(): #desired xyphi speeds from the absolute frame determined here
-    check_Error()
     #pushes back position error history
     for i in range(4):
         for j in reversed(range(1,3)):
@@ -102,24 +102,21 @@ def position_PID(): #desired xyphi speeds from the absolute frame determined her
     [dx,dy,dphi] = absolute2Local(dx_abs,dy_abs,dphi_abs)
     ang_vel_log.write(str(dx) + "," +str(dy)+","+str(dphi)+"\n")
 
+    check_Error()
+
     return [dx,dy,dphi]
 
 def check_Error():
     #rospy.loginfo("checking error")
     #rospy.loginfo(str(abs(position_error[2,0]))+"<"+str(error_threshold[2,0])+"="+str(abs(position_error[2,0]) < error_threshold[2,0]))
     if( abs(position_error[0,0]) < error_threshold[0,0] and abs(position_error[1,0]) < error_threshold[1,0] and abs(position_error[2,0]) < error_threshold[2,0] ):
-        at_location = True
-        try:
-            pub.publish(AtLocation(True))
-        except Exception:
-            pass
-    else:
-        at_location = False
-        try:
-            pub.publish(AtLocation(False))
-        except Exception:
-            pass   
-    return
+        global sent
+        if not sent:
+            try:
+                pub.publish(AtLocation(True))
+                sent = True
+            except Exception:
+                pass
 
 def send_Arduino(): #sends commands to arduino at a consitant rate
     slog = open("send.log", 'w', buffering=1)
@@ -128,6 +125,9 @@ def send_Arduino(): #sends commands to arduino at a consitant rate
     global dy
     global dphi
     global sendSpeeds
+    global sent
+
+    sent = True
 
     while(sendSpeeds == True):
         [dx,dy,dphi] = position_PID()
@@ -206,6 +206,9 @@ def handle_move_robot(des_loc):
     desired_location[0,0] = float(des_loc.X)
     desired_location[1,0] = float(des_loc.Y)
     desired_location[2,0] = float(des_loc.phi)
+
+    global sent
+    sent = False
 
     rospy.loginfo("X:%f Y:%f PHI:%f" %(des_loc.X, des_loc.Y, des_loc.phi))
 
