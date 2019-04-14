@@ -12,6 +12,12 @@ GPIO.setwarnings(False)
 
 import threading
 
+target_type = {'VALVE1': 0,
+                'VALVE2': 1,
+                'VALVE3': 2,
+                'BREAKER': 3}
+
+
 class LED_thread(threading.Thread):
     def __init__(self, mode):
         self._stopevent = threading.Event()
@@ -118,6 +124,7 @@ class System:
         rospy.Subscriber("button_press", ButtonPress, self.handle_button)
         rospy.Subscriber("at_location", AtLocation, self.handle_at_location)
         self.move_commands = rospy.Publisher("move_commands", MoveCommand, queue_size=1)
+        self.move_arm = rospy.Publisher("move_endeffector", MoveArm, queue_size=1)        
         rospy.loginfo("Initialized system")
         rospy.loginfo("System starting state: %s" % self.state)       
 
@@ -157,8 +164,8 @@ class System:
     def move_to_next_target(self):
         self.move_complete = False
         self.move_commands.publish(MoveCommand(self.target['station'][0], self.target['station'][1], 0))
+        self.move_arm.publish(MoveArm(self.target['arm_reset'][0], self.target['arm_reset'][1], self.target['arm_reset'][2]))
         rospy.loginfo("Moving to %f,%f" % (self.target['station'][0],self.target['station'][1]))
-        time.sleep(3)
         while not self.move_complete:
             pass
         return True
@@ -170,11 +177,13 @@ class System:
         rospy.wait_for_service('detect_target')
         try:
             detect_target = rospy.ServiceProxy('detect_target', DetectTarget)
-            target_info = detect_target(0)
+            target_info = detect_target(target_type[self.target['types']])
             self.target['position'] = {}
             self.target['position']['X'] = target_info.X
             self.target['position']['Y'] = target_info.Y
             self.target['position']['Z'] = target_info.Z
+            self.target['position']['orientation'] = target_info.orientation_state
+            rospy.loginfo('Detected:' + str(target_info))
             return True
         except rospy.ServiceException, e:
             rospy.loginfo("Service call failed: %s" % e)
@@ -186,8 +195,9 @@ class System:
     def move_end_effector_to_target(self):
         rospy.wait_for_service('move_endeffector')
         try:
-            move_endeffector = rospy.ServiceProxy('move_endeffector', MoveEndEffector)
-            return move_endeffector(self.target['position']['X'], self.target['position']['Y'], self.target['position']['Z'])
+            pass
+            #move_endeffector = rospy.ServiceProxy('move_endeffector', MoveEndEffector)
+            #return move_endeffector(self.target['position']['X'], self.target['position']['Y'], self.target['position']['Z'])
         except rospy.ServiceException, e:
             rospy.loginfo("Service call failed: %s" %e)
             return False

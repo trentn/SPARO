@@ -34,7 +34,7 @@ feedback = hebi.GroupFeedback(group.size)
 
 desired_angles = np.empty(group.size,dtype=np.float64)
 desired_angles[0] = 90.0/180.*math.pi
-desired_angles[1] = 90./180.*math.pi
+desired_angles[1] = 100.0/180.*math.pi
 desired_angles[2] = 0.0 + 8.0/180.0*math.pi
 
 HEBI_talk = True

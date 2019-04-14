@@ -52,7 +52,7 @@ bool detect_target(system_state::DetectTarget::Request &req,
         case VALVE1:  target_color = &blue;
                              break;
 
-        case VALVE2:  target_color = &orange;
+        case VALVE2:  target_color = &blue;
                              break;
 
         case VALVE3:  target_color = &blue;
@@ -81,7 +81,12 @@ bool detect_target(system_state::DetectTarget::Request &req,
     rs2::frameset frames;
     for(int i = 0; i < 60; i++)
     {
-        frames = pipe.wait_for_frames();
+        try{
+            frames = pipe.wait_for_frames();
+        }
+        catch(const std::exception& e){
+            /**/
+        }
     }
     // align frames and extract data
     rs2::align align = rs2::align(RS2_STREAM_COLOR);

@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 
+import sys
+sys.path = ['', '/home/ubuntu/SPARO/ROS_modules/devel/lib/python2.7/dist-packages', '/opt/ros/kinetic/lib/python2.7/dist-packages', '/usr/lib/python2.7', '/usr/lib/python2.7/plat-arm-linux-gnueabihf', '/usr/lib/python2.7/lib-tk', '/usr/lib/python2.7/lib-old', '/usr/lib/python2.7/lib-dynload', '/home/ubuntu/.local/lib/python2.7/site-packages', '/usr/local/lib/python2.7/dist-packages', '/usr/lib/python2.7/dist-packages', '/usr/lib/python2.7/dist-packages/wx-3.0-gtk2']
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
 import numpy as np
 import rospy
 from system_state.srv import *
+
+
 
 global tags
 tags = {0: 'B000',

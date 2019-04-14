@@ -14,6 +14,8 @@ import math
 from system_state.msg import *
 import rospy
 
+print "program started"
+
 pub = rospy.Publisher("at_location", AtLocation, queue_size=1)
 
 #eventually this program will send encoder data up to the localization
@@ -21,8 +23,6 @@ pub = rospy.Publisher("at_location", AtLocation, queue_size=1)
 #This program will recieve desired locations from the higher level mission files
 #Eventually, this will just be the manager between the desired_location
 #and the motor commands needed to get there.
-
-print "program started"
 
 error_threshold = np.matrix([[.01],[.01],[1.0/180.0*math.pi]]) #How close we try to get to final position
 
@@ -56,16 +56,12 @@ phi_gains = np.matrix([[.5],[0.]]) #kp,kd for phi
 send_rate = .05 #rate of data transfer to arduino. used in send_Arduino thread
 catch_rate = .05 #rate the Arduino should send to the RPi
 
-ser = serial.Serial("/dev/ttyACM0", 9600, timeout=5)
-ser.flush()
-
-print "Serial initialized"
+ser = serial.Serial("/dev/ttyACM0", 9600)
+time.sleep(1)
 
 def initialize_Arduino(): #intention is for function to run serial setup and send any parameters we want to arduino, for now only message frequency, maybe later different modes.
-    print "initialize_Arduino entered"
     ser.write("-999\n")
-    time.sleep(.25)
-    ser.flush()
+    print "initialize_Arduino entered"
     while True:
         ser.write("Are you ready kids?,"+str(catch_rate)+"\n") #so far catch rate is the only thing this is concerned with but later we can add additional things to make arduino updates easier on the fly
         print "Message sent"
