@@ -7,4 +7,5 @@ ser = serial.Serial("/dev/ttyACM0", 9600)
 while True:
 	speeds = raw_input("Enter speeds: ")
 	speeds = speeds+"\n"
+	print(repr(speeds))
 	ser.write(speeds)

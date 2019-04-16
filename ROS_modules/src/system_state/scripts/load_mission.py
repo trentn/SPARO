@@ -4,17 +4,17 @@ from system_state.srv import *
 import rospy
 import json
 
-locations = {'A':(1.38+.161,.33),
-             'B':(1.075+.161,.33),
-             'C':(0.77+.161,0.33),
-             'D':(0.465+.161,0.33),
-             'E':(0.33,0.33),
-             'F':(0.33,0.33),
-             'G':(0.33,0.425+.161),
-             'H':(0.33,0.73+.161)}
+locations = {'A':(1.38+.161,0.4),
+             'B':(1.075+.161,0.4),
+             'C':(0.77+.161,0.4),
+             'D':(0.465+.161,0.4),
+             'E':(0.33,0.4),
+             'F':(0.4,0.33),
+             'G':(0.4,0.425+.161),
+             'H':(0.4,0.73+.161)}
 
 def arm_rest_position(station_letter):
-    if(station_letter >= 'A' or station_letter < 'F'):
+    if(station_letter >= 'A' and station_letter < 'F'):
         return (.809, -90, 45)
     else:
         return (.809, -90, -45)

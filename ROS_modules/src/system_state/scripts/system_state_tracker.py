@@ -193,9 +193,17 @@ class System:
         return False
     
     def move_end_effector_to_target(self):
-        rospy.wait_for_service('move_endeffector')
         try:
-            pass
+            if(self.target['types']=='VALVE1'):
+                self.move_commands.publish(MoveCommand(self.target['station'][0] + -self.target['position']['X']+.01,
+                                                        self.target['station'][1] - .10,
+                                                        0))
+
+                self.move_arm.publish(MoveArm(.256 + .2032 + self.target['position']['Y'],
+                                                90,
+                                                self.target['arm_reset'][2]))
+
+            return True
             #move_endeffector = rospy.ServiceProxy('move_endeffector', MoveEndEffector)
             #return move_endeffector(self.target['position']['X'], self.target['position']['Y'], self.target['position']['Z'])
         except rospy.ServiceException, e:
@@ -223,6 +231,7 @@ class System:
         if self.state == "PRE-OPERATION":
             led_thread = LED_thread("pre-op") 
             led_thread.start()
+            self.task = 0
             while not self.button_pressed:
                 pass
             self.state = "LOADING_MISSION"
