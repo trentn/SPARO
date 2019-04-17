@@ -79,6 +79,12 @@ Adafruit_VL53L0X lox4 = Adafruit_VL53L0X();
 double range_mm[4];
 
 void setup() {
+  digitalWrite(TOF1, LOW);
+  digitalWrite(TOF2, LOW);
+  digitalWrite(TOF3, LOW);
+  digitalWrite(TOF4, LOW);
+  delay(100);
+  
   initialized = false;
   s_index = 0;
   stringComplete = false;
@@ -178,6 +184,7 @@ void loop() {
 
 void read_TOF()
 {
+  
   VL53L0X_RangingMeasurementData_t measure1;
   VL53L0X_RangingMeasurementData_t measure2;
   VL53L0X_RangingMeasurementData_t measure3;
