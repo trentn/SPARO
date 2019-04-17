@@ -46,7 +46,7 @@ Encoder m2_enc = Encoder(enc2trigA, enc2trigB);
 Encoder m3_enc = Encoder(enc3trigA, enc3trigB);
 Encoder m4_enc = Encoder(enc4trigA, enc4trigB);
 
-double kp[4] = {255.0/600.0, 255/600.0, 255/600.0, 255/600.0};
+double kp[4] = {255.0 / 600.0, 255 / 600.0, 255 / 600.0, 255 / 600.0};
 double kd[4] = {0, 0, 0, 0};
 
 double currentPWM[4];
@@ -57,7 +57,7 @@ double states[4][3][3]; //[Motor #][Time Step][Absolute Enc Clicks, Velocity (rp
 
 double error[4][2]; //[Motor #][Time Step]
 
-double last_send_time = 0;
+double last_TOF_send = 0;
 
 bool initialized = false;
 int s_index = 0;
@@ -67,7 +67,7 @@ String motor3string;
 String motor4string;
 String* RPM_strings[4] = {&motor1string, &motor2string, &motor3string, &motor4string};
 String initialize_code;
-String send_rate_string; 
+String send_rate_string;
 String* initialize_string[2] = {&initialize_code, &send_rate_string};
 bool stringComplete = false;  // whether the string is complete
 
@@ -77,14 +77,14 @@ Adafruit_VL53L0X lox3 = Adafruit_VL53L0X();
 Adafruit_VL53L0X lox4 = Adafruit_VL53L0X();
 
 double range_mm[4];
-
+double last_send_time = 0;
 void setup() {
   digitalWrite(TOF1, LOW);
   digitalWrite(TOF2, LOW);
   digitalWrite(TOF3, LOW);
   digitalWrite(TOF4, LOW);
   delay(100);
-  
+
   initialized = false;
   s_index = 0;
   stringComplete = false;
@@ -94,17 +94,17 @@ void setup() {
   desiredSpeed[1] = 0;
   desiredSpeed[2] = 0;
   desiredSpeed[3] = 0;
-  
-  for(int i = 0;i<4;i++){
-    for(int j = 0;j<3;j++){
-      for(int k = 0;k<3;k++){
+
+  for (int i = 0; i < 4; i++) {
+    for (int j = 0; j < 3; j++) {
+      for (int k = 0; k < 3; k++) {
         states[i][j][k] = 0;
       }
     }
-    desiredSpeed[i]=0;
+    desiredSpeed[i] = 0;
     currentPWM[i] = 0;
-    error[i][0]=0;
-    error[i][1]=0;
+    error[i][0] = 0;
+    error[i][1] = 0;
   }
   motor1string.reserve(50);
   motor2string.reserve(50);
@@ -115,7 +115,7 @@ void setup() {
 
   initialize_code = "";
   send_rate_string = "";
-  
+
   pinMode(m1in1, OUTPUT);
   pinMode(m1in2, OUTPUT);
   pinMode(m2in1, OUTPUT);
@@ -125,7 +125,7 @@ void setup() {
   pinMode(m4in1, OUTPUT);
   pinMode(m4in2, OUTPUT);
   pinMode(m1in1, OUTPUT);
-  
+
   pinMode(TOF1, OUTPUT);
   pinMode(TOF2, OUTPUT);
   pinMode(TOF3, OUTPUT);
@@ -136,15 +136,15 @@ void setup() {
   digitalWrite(TOF3, LOW);
   digitalWrite(TOF4, LOW);
   delay(10);
-  
+
   Serial.begin(9600);
-  
+
   while (! Serial) {
     delay(1);
   }
 
   TOF_setup();
-  
+
   initializeStates();
   updateStates();
   delay(100);
@@ -160,25 +160,30 @@ void setup() {
 
 
 void loop() {
-  if(!initialized && stringComplete)
+  if (!initialized && stringComplete)
   {
     //Serial.println("Waiting for Rpi");
     waitForRPi();
   }
-  else if(initialized)
+  else if (initialized)
   {
-  if (stringComplete) {
-    updateSpeeds();
-    stringComplete = false;
-  }
-  controlLoopAll();
-  read_TOF();
-  //Serial.println(currentPWM[0]);
-  if(abs(last_send_time-micros()/1000000.0) > send_rate){
-    sendToRPi();
-    last_send_time = micros()/1000000.0;
-  }
-  delay(10);
+    if (stringComplete) {
+      updateSpeeds();
+      stringComplete = false;
+    }
+    controlLoopAll();
+    if (abs(last_send_time - micros() / 1000000.0) > send_rate) {
+      sendToRPi();
+      last_send_time = micros() / 1000000.0;
+    }
+    
+    if(abs(last_TOF_send - micros()/1000000.0) > .5)
+    {
+      delay(1);
+      read_TOF();
+      last_TOF_send = micros()/1000000.0;
+    }
+    delay(10);
   }
   //allMotorSpeeds();
 }
@@ -190,7 +195,7 @@ void read_TOF()
   VL53L0X_RangingMeasurementData_t measure2;
   VL53L0X_RangingMeasurementData_t measure3;
   VL53L0X_RangingMeasurementData_t measure4;
-    
+
   lox1.rangingTest(&measure1, false); // pass in 'true' to get debug data printout!
   lox2.rangingTest(&measure2, false);
   lox3.rangingTest(&measure3, false);
@@ -224,76 +229,74 @@ void read_TOF()
 
 void TOF_setup()
 {
-  Serial.println("Setting up TOF");
   digitalWrite(TOF1, HIGH);
   if (!lox1.begin(0x31)) {
     Serial.println(F("Failed to boot VL53L0X"));
-    while(1);
+    while (1);
   }
 
   digitalWrite(TOF2, HIGH);
   if (!lox2.begin(0x32)) {
     Serial.println(F("Failed to boot VL53L0X"));
-    while(1);
+    while (1);
   }
-  
+
   digitalWrite(TOF3, HIGH);
   if (!lox3.begin(0x33)) {
     Serial.println(F("Failed to boot VL53L0X"));
-    while(1);
+    while (1);
   }
-  
+
   digitalWrite(TOF4, HIGH);
   if (!lox4.begin(0x34)) {
     Serial.println(F("Failed to boot VL53L0X"));
-    while(1);
+    while (1);
   }
-  Serial.println("Exit setup TOF");
 }
 
 void waitForRPi()
 {
-     if (stringComplete) {
-        //Serial.println("String recieved");
-        if(initialize_code == "Are you ready kids?")
-        {
-          send_rate = send_rate_string.toDouble();
-          initialized = true;
-          Serial.println("Aye aye captain!");
-          Serial.flush();
-          delay(2000);
-        }
-        else
-        {
-          Serial.println("Authentication failed");
-          Serial.flush();
-          initialize_code = "";
-          send_rate_string = "";
-        }
-        delay(5);
-        stringComplete = false;
+  if (stringComplete) {
+    //Serial.println("String recieved");
+    if (initialize_code == "Are you ready kids?")
+    {
+      send_rate = send_rate_string.toDouble();
+      initialized = true;
+      Serial.println("Aye aye captain!");
+      Serial.flush();
+      delay(2000);
     }
+    else
+    {
+      Serial.println("Authentication failed");
+      Serial.flush();
+      initialize_code = "";
+      send_rate_string = "";
+    }
+    delay(5);
+    stringComplete = false;
+  }
 }
 
 void sendToRPi()
 {
-    Serial.print((2*states[0][0][1]+states[0][1][1]+states[0][2][1])/4);
-    Serial.print(",");
-    Serial.print((2*states[1][0][1]+states[1][1][1]+states[1][2][1])/4);
-    Serial.print(",");
-    Serial.print((2*states[2][0][1]+states[2][1][1]+states[2][2][1])/4);
-    Serial.print(",");
-    Serial.print((2*states[3][0][1]+states[3][1][1]+states[3][2][1])/4);
-    Serial.print(",");
-    Serial.print(states[0][0][2]);
-    Serial.print(",");
-    Serial.print(range_mm[0]);
-    Serial.print(",");
-    Serial.print(range_mm[1]);
-    Serial.print(",");
-    Serial.print(range_mm[2]);
-    Serial.print(",");
-    Serial.println(range_mm[3]);
+  Serial.print((2 * states[0][0][1] + states[0][1][1] + states[0][2][1]) / 4);
+  Serial.print(",");
+  Serial.print((2 * states[1][0][1] + states[1][1][1] + states[1][2][1]) / 4);
+  Serial.print(",");
+  Serial.print((2 * states[2][0][1] + states[2][1][1] + states[2][2][1]) / 4);
+  Serial.print(",");
+  Serial.print((2 * states[3][0][1] + states[3][1][1] + states[3][2][1]) / 4);
+  Serial.print(",");
+  Serial.print(states[0][0][2]);
+  Serial.print(",");
+  Serial.print(range_mm[0]);
+  Serial.print(",");
+  Serial.print(range_mm[1]);
+  Serial.print(",");
+  Serial.print(range_mm[2]);
+  Serial.print(",");
+  Serial.println(range_mm[3]);
 }
 
 void controlLoopAll()
@@ -325,8 +328,8 @@ void updatePWM()
     if (currentPWM[i] > 255)
     {
       currentPWM[i] = 254;
-     // Serial.print("Warning:: Motor ");
-     // Serial.print(i+1);
+      // Serial.print("Warning:: Motor ");
+      // Serial.print(i+1);
       //Serial.println(" pos saturating!");
     }
   }
@@ -505,20 +508,20 @@ void fullStop()
 }
 
 
-void updateSpeeds(){
-  desiredSpeed[0] = motor1string.toDouble();  
+void updateSpeeds() {
+  desiredSpeed[0] = motor1string.toDouble();
   motor1string = "";
-  
+
   desiredSpeed[1] = motor2string.toDouble();
   motor2string = "";
-  
+
   desiredSpeed[2] = motor3string.toDouble();
   motor3string = "";
-  
+
   desiredSpeed[3] = motor4string.toDouble();
   motor4string = "";
 
-  if(desiredSpeed[0]==-999)
+  if (desiredSpeed[0] == -999)
   {
     setup();
   }
@@ -545,14 +548,14 @@ void serialEvent() {
       s_index++;
       continue;
     }
-  if(!initialized){
-    //Serial.println("Initialize string");
-    *initialize_string[s_index] += inChar;
-  }
-  else if(initialized){
-    //Serial.println("Motor string");
-    *RPM_strings[s_index] += inChar;
-    
-  }
+    if (!initialized) {
+      //Serial.println("Initialize string");
+      *initialize_string[s_index] += inChar;
+    }
+    else if (initialized) {
+      //Serial.println("Motor string");
+      *RPM_strings[s_index] += inChar;
+
+    }
   }
 }
