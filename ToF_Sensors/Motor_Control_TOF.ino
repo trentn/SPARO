@@ -143,6 +143,7 @@ void setup() {
     delay(1);
   }
 
+  TOF_setup();
   
   initializeStates();
   updateStates();
@@ -184,7 +185,7 @@ void loop() {
 
 void read_TOF()
 {
-  
+  //Serial.println("In TOF loop");
   VL53L0X_RangingMeasurementData_t measure1;
   VL53L0X_RangingMeasurementData_t measure2;
   VL53L0X_RangingMeasurementData_t measure3;
@@ -218,10 +219,12 @@ void read_TOF()
   } else {
     range_mm[3] = -999;
   }
+  //Serial.println("Exited TOF read");
 }
 
 void TOF_setup()
 {
+  Serial.println("Setting up TOF");
   digitalWrite(TOF1, HIGH);
   if (!lox1.begin(0x31)) {
     Serial.println(F("Failed to boot VL53L0X"));
@@ -245,6 +248,7 @@ void TOF_setup()
     Serial.println(F("Failed to boot VL53L0X"));
     while(1);
   }
+  Serial.println("Exit setup TOF");
 }
 
 void waitForRPi()
