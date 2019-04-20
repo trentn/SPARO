@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import math
 import time
 import json
 import rospy
@@ -41,7 +41,7 @@ class LED_thread(threading.Thread):
             self.blink = self.error
 
         self.status_pin = 6
-	self.error_pin = 5
+        self.error_pin = 5
         self.locomotion_pin = 17
         self.vision_pin = 27
         self.endeffector_pin = 22
@@ -53,10 +53,10 @@ class LED_thread(threading.Thread):
             self.blink()
 
     def pre_op_blink(self):
-	GPIO.output(self.status_pin, GPIO.HIGH)
-	time.sleep(.50)
-	GPIO.output(self.status_pin, GPIO.LOW)
-	time.sleep(.25)
+        GPIO.output(self.status_pin, GPIO.HIGH)
+        time.sleep(.50)
+        GPIO.output(self.status_pin, GPIO.LOW)
+        time.sleep(.25)
 
     def loading_blink(self):
         GPIO.output(self.status_pin, GPIO.HIGH)
@@ -193,16 +193,32 @@ class System:
         return False
     
     def move_end_effector_to_target(self):
+        print("in move end effector")
+        time.sleep(2)
         try:
             if(self.target['types']=='VALVE1'):
+                print("entered arm control valve 1")
+                h_needed = .4635 + self.target['position']['Y']-.01
+                print(h_needed)
+                x_needed = math.sqrt(.4572**2-(h_needed-.2032)**2)
+                print(x_needed)
                 self.move_commands.publish(MoveCommand(self.target['station'][0] + -self.target['position']['X']+.01,
-                                                        self.target['station'][1] - .10,
+                                                        self.target['station'][1] - (x_needed - self.target['position']['Z']),
                                                         0))
-
-                self.move_arm.publish(MoveArm(.256 + .2032 + self.target['position']['Y'],
+                
+                time.sleep(4)
+                print("First arm movement")
+                self.move_arm.publish(MoveArm(.52,
                                                 90,
                                                 self.target['arm_reset'][2]))
 
+                time.sleep(5)
+                print("Second arm movement")
+                self.move_arm.publish(MoveArm(h_needed,
+                                                90,
+                                                self.target['arm_reset'][2]))
+
+                time.sleep(5)
             return True
             #move_endeffector = rospy.ServiceProxy('move_endeffector', MoveEndEffector)
             #return move_endeffector(self.target['position']['X'], self.target['position']['Y'], self.target['position']['Z'])
@@ -232,8 +248,7 @@ class System:
             led_thread = LED_thread("pre-op") 
             led_thread.start()
             self.task = 0
-            while not self.button_pressed:
-                pass
+            raw_input("Press enter to continue with mission")
             self.state = "LOADING_MISSION"
             self.button_pressed = False
             self.log_state_change("PRE-OPERATION")
