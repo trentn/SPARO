@@ -124,7 +124,8 @@ class System:
         rospy.Subscriber("button_press", ButtonPress, self.handle_button)
         rospy.Subscriber("at_location", AtLocation, self.handle_at_location)
         self.move_commands = rospy.Publisher("move_commands", MoveCommand, queue_size=1)
-        self.move_arm = rospy.Publisher("move_endeffector", MoveArm, queue_size=1)        
+        self.move_arm = rospy.Publisher("move_arm", MoveArm, queue_size=1)        
+        self.turn_endeffector = rospy.Publisher("turn_endeffector", TurnEndEffector, queue_size=1)        
         rospy.loginfo("Initialized system")
         rospy.loginfo("System starting state: %s" % self.state)       
 
@@ -184,6 +185,8 @@ class System:
             self.target['position']['Z'] = target_info.Z
             self.target['position']['orientation'] = target_info.orientation_state
             rospy.loginfo('Detected:' + str(target_info))
+            if(target_info.X == 0 and target_info.Y == 0 and target_info.Z == 0):
+                return False
             return True
         except rospy.ServiceException, e:
             rospy.loginfo("Service call failed: %s" % e)
@@ -194,16 +197,18 @@ class System:
     
     def move_end_effector_to_target(self):
         print("in move end effector")
-        time.sleep(2)
+        time.sleep(3)
         try:
             if(self.target['types']=='VALVE1'):
                 print("entered arm control valve 1")
-                h_needed = .4635 + self.target['position']['Y']-.01
+                h_needed = .4635 + self.target['position']['Y'] + .01
                 print(h_needed)
-                x_needed = math.sqrt(.4572**2-(h_needed-.2032)**2)
-                print(x_needed)
-                self.move_commands.publish(MoveCommand(self.target['station'][0] + -self.target['position']['X']+.01,
-                                                        self.target['station'][1] - (x_needed - self.target['position']['Z']),
+                y_needed = math.sqrt(.455**2-(h_needed-.205+.155)**2) - 0.02 + .07
+                print(y_needed)
+                print(y_needed - self.target['position']['Z'])
+                print(self.target['station'][1])
+                self.move_commands.publish(MoveCommand(self.target['station'][0] - self.target['position']['X' ] + 0.02,
+                                                        self.target['station'][1] + (y_needed - self.target['position']['Z']) + 0.01,
                                                         0))
                 
                 time.sleep(4)
@@ -218,6 +223,15 @@ class System:
                                                 90,
                                                 self.target['arm_reset'][2]))
 
+                time.sleep(3)
+                self.move_commands.publish(MoveCommand(self.target['station'][0] - self.target['position']['X' ] + 0.02,
+                                                        self.target['station'][1] + (y_needed - self.target['position']['Z']) + 0.01,
+                                                        0))
+                time.sleep(3)
+                self.move_arm.publish(MoveArm(h_needed-.02,
+                                                90,
+                                                self.target['arm_reset'][2]))
+                                
                 time.sleep(5)
             return True
             #move_endeffector = rospy.ServiceProxy('move_endeffector', MoveEndEffector)
@@ -227,14 +241,10 @@ class System:
             return False
 
     def set_target_to_desired(self):
-        rospy.wait_for_service('set_target')
-        try:
-            set_target = rospy.ServiceProxy('set_target', SetTargetState)
-            return set_target().state_reached
-        except rospy.ServiceException, e:
-            rospy.loginfo("Service call failed: %s" %e)
-            return False
-
+        if(self.target['types'] == 'VALVE1'):
+		self.turn_endeffector.publish(TurnEndEffector(int(self.target['desiredPosition'])))
+	time.sleep(1)
+	return True
 
     def log_state_change(self, prev_state):
         rospy.loginfo('state change: %s -> %s' %(prev_state, self.state))
@@ -248,7 +258,9 @@ class System:
             led_thread = LED_thread("pre-op") 
             led_thread.start()
             self.task = 0
-            raw_input("Press enter to continue with mission")
+            while not self.button_pressed:
+                pass
+            #raw_input("Press enter to continue with mission")
             self.state = "LOADING_MISSION"
             self.button_pressed = False
             self.log_state_change("PRE-OPERATION")

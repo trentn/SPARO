@@ -2,9 +2,8 @@
     <node name="system_tracker" pkg="system_state" type="system_state_tracker.py" output="screen" launch-prefix="/home/ubuntu/SPARO/ROS_modules/ros_tmux.sh"/>
     <node name="mission_parser" pkg="system_state" type="load_mission.py" output="screen" launch-prefix="/home/ubuntu/SPARO/ROS_modules/ros_tmux.sh"/>
     <node name="vision_system" pkg = "system_state" type="vision_system" output="screen" launch-prefix="/home/ubuntu/SPARO/ROS_modules/ros_tmux.sh"/>
-    <node name="locomotion" pkg="system_state" type="positionControl_DR.py" output="screen" launch-prefix="/home/ubuntu/SPARO/ROS_modules/ros_tmux.sh"/>
-    <node name="endeffector" pkg="system_state" type="end_effector.py" output="screen" launch-prefix="/home/ubuntu/SPARO/ROS_modules/ros_tmux.sh"/>
+    <node name="arduinos" pkg="system_state" type="positionControl_DR.py" output="screen" launch-prefix="/home/ubuntu/SPARO/ROS_modules/ros_tmux.sh"/>
     <node name="arm" pkg="system_state" type="arm_control.py" output="screen" launch-prefix="/home/ubuntu/SPARO/ROS_modules/ros_tmux.sh"/>
-    <!--<node name="button" pkg="system_state" type="button.py" output="screen" launch-prefix="/home/ubuntu/SPARO/ROS_modules/ros_tmux.sh"/>-->
     <node name="orientation" pkg="system_state" type="orientation_node.py" output="screen" launch-prefix="/home/ubuntu/SPARO/ROS_modules/ros_tmux.sh"/>
+    <node name="button" pkg="system_state" type="button.py"/>
 </launch>

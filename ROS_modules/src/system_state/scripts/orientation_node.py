@@ -50,6 +50,11 @@ def load_model():
 
 	global graph
 	graph = tf.get_default_graph()
+	
+	with session.as_default():
+		with graph.as_default():
+			model.predict(np.zeros(shape=(1,224,224,3)))
+
 
 def load_image(img_path):
 	img = keras.preprocessing.image.load_img(img_path, target_size=(224, 224))

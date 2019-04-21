@@ -54,6 +54,8 @@ add_message_files(
   MoveCommand.msg
   AtLocation.msg
   MoveArm.msg
+  TurnEndEffector.msg
+  NodeLoaded.msg
 )
 
 ## Generate services in the 'srv' folder

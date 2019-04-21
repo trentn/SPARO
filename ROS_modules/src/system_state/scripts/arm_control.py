@@ -78,8 +78,8 @@ def handle_move_endeffector(req):
 
 def arm_node():
     rospy.init_node("arm_node")
-    rospy.loginfo("End Effector system is running")
-    s = rospy.Subscriber("move_endeffector", MoveArm, handle_move_endeffector)
+    rospy.loginfo("Arm Control  system is running")
+    s = rospy.Subscriber("move_arm", MoveArm, handle_move_endeffector)
     rospy.spin()
 
 
