@@ -1,3 +1,8 @@
+/***********
+currently, line 58 holds an array which is cycled through every 10 seconds as defined in lines 76 and 84
+We can instead choose the patter based on state or pin reading instead
+*****/
+
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
@@ -50,8 +55,7 @@ int pass = 0;
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 typedef void (*SimplePatternList[])();
-//SimplePatternList gPatterns = { teamName, SPARO, cylon, confetti, sinelon, juggle, bpm, thankYou };
-SimplePatternList gPatterns = { cylon };
+SimplePatternList gPatterns = { teamName, SPARO, cylon, confetti, sinelon, juggle, bpm, thankYou };
 
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
