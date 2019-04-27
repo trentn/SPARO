@@ -24,7 +24,7 @@ def handle_load_mission(req):
     mission = {}
 
     try:
-        myfile=open("/media/usb/mission.txt")
+        myfile=open("./mission.txt")
         content = myfile.read()
         eachline=content.splitlines()
         mission["tasks"] = []
@@ -34,60 +34,37 @@ def handle_load_mission(req):
             r4=arm_rest_position(eachline[j][0])
             if eachline[j][1]=="V" and eachline[j][2]=="1":
                 r2='VALVE1'
-                r3=eachline[j][4:]
+                r3=-int(eachline[j][4:])
             if eachline[j][1]=="V" and eachline[j][2]=="2":
                 r2='VALVE2'
-                r3=eachline[j][4:]
+                r3=-int(eachline[j][4:])
             if eachline[j][1]=="V" and eachline[j][2]=="3":
                 r2='VALVE3'
                 if eachline[j][4]=='0':
                     r3='O'
                 if eachline[j][4]=='1':
                     r3='C'
-            if eachline[j][1]=="A":
-                r2='BREAKER_A'
-                if eachline[j][6]=="U":
-                    r31='1'
-                else:
-                    r31='0'
-                if eachline[j][11]=="U":
-                    r32='1'
-                else:
-                    r32='0'
-                if eachline[j][16]=="U":
-                    r33='1'
-                else:
-                    r33='0'    
-            if eachline[j][1]=="B":
-                r2='BREAKER_B' 
-                if eachline[j][6]=="U":
-                    r31='1'
-                else:
-                    r31='0'
-                if eachline[j][11]=="U":
-                    r32='1'
-                else:
-                    r32='0'
-                if eachline[j][16]=="U":
-                    r33='1'
-                else:
-                    r33='0'
+            if eachline[j][1] == 'A' or eachline[j][1] == 'B':
+                r2='BREAKER_%c'%eachline[j][1]
+                breaker_states = list(filter(None, eachline[j][3:].split('B')))
+                r3 = ['-','-','-']
+                for state in breaker_states:
+                    r3[int(state[0])-1] = '0' if state[2] == 'D' else '1'
 
-            if len(eachline[j])==17:
-                result={"station_letter":r1, "station":location, "types":r2, "desiredPosition":[r31,r32,r33], "arm_reset":r4}
-            else:
-                result={"station_letter":r1, "station":location, "types":r2, "desiredPosition":r3,"arm_reset":r4}
+            result={"station_letter":r1, "station":location, "types":r2, "desiredPosition":r3,"arm_reset":r4}
             mission["tasks"].append(result)
 
         mission["time"] = int(eachline[j+1])
         rospy.loginfo("Mission Loaded: %s" % str(mission))
-
-    except:
-        rospy.loginfo("Mission failed to load")
     
+    
+    except Exception:
+        rospy.loginfo("Mission failed to load")
+        raise Exception
+        
     finally:
         return LoadMissionResponse(json.dumps(mission))
-
+        
 def mission_loader():
     rospy.init_node("mission_loader")
     s = rospy.Service("load_mission", LoadMission, handle_load_mission)
