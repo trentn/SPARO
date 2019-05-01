@@ -1,14 +1,16 @@
-/***********
-currently, line 58 holds an array which is cycled through every 10 seconds as defined in lines 76 and 84
-We can instead choose the patter based on state or pin reading instead
-*****/
-
 #include <Adafruit_NeoPixel.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
 #include <FastLED.h>
 
 #define DATA_PIN    6
+#define readyPin 1
+#define errorPin 2
+#define motionPin 5
+#define sensePin 4
+#define actionPin 3
+
+
 #define LED_TYPE    WS2811
 #define COLOR_ORDER RGB
 #define NUM_LEDS    256
@@ -48,6 +50,11 @@ void setup() {
   matrix.setTextWrap(false);
   matrix.setBrightness(40);
   matrix.setTextColor(colors[0]);
+  pinMode (readyPin , INPUT_PULLUP);
+  pinMode (errorPin , INPUT_PULLUP);
+  pinMode (motionPin , INPUT_PULLUP);
+  pinMode (sensePin , INPUT_PULLUP);
+  pinMode (actionPin , INPUT_PULLUP);
 }
 
 int x    = matrix.width();
@@ -55,25 +62,45 @@ int pass = 0;
 
 // List of patterns to cycle through.  Each is defined as a separate function below.
 typedef void (*SimplePatternList[])();
-SimplePatternList gPatterns = { teamName, SPARO, cylon, confetti, sinelon, juggle, bpm, thankYou };
+//SimplePatternList gPatterns = { teamName, SPARO, cylon, confetti, sinelon, juggle, bpm, thankYou };
+
+SimplePatternList gPatterns = { teamName, SPARO, cylon, sinelon, juggle, bpm, thankYou };
+//SimplePatternList gPatterns = { thankYou };
 
 uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
   
 void loop()
 {
-  // Call the current pattern function once, updating the 'leds' array
-  gPatterns[gCurrentPatternNumber]();
+  if(digitalRead (readyPin) == LOW){
+    SPARO();
+  }
+  else if(digitalRead (motionPin) == LOW){
+    cylon();
+  }
+  else if(digitalRead (sensePin) == LOW){
+    if(digitalRead(actionPin) == LOW) {
+      thankYou();
+    } else {
+      sinelon();
+    }
+  } 
+  else if(digitalRead (actionPin) == LOW){
+    juggle(); 
+  }
+  else if(digitalRead (errorPin) == LOW){
+    bpm();  
+  }
+  else {
+    matrix.fillScreen(0);
+    matrix.show();
+  }
 
-  // send the 'leds' array out to the actual LED strip
-  FastLED.show();  
-  matrix.show();
-  // insert a delay to keep the framerate modest
-  FastLED.delay(1000/FRAMES_PER_SECOND); 
+  
+//  gPatterns[gCurrentPatternNumber]();
 
-  // do some periodic updates
   EVERY_N_MILLISECONDS( 20 ) { gHue++; } // slowly cycle the "base color" through the rainbow
-  EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
+ // EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
@@ -93,6 +120,7 @@ void confetti()
   fadeToBlackBy( leds, NUM_LEDS, 10);
   int pos = random16(NUM_LEDS);
   leds[pos] += CHSV( gHue + random8(64), 200, 255);
+      FastLED.show();
 }
 
 void sinelon()
@@ -101,6 +129,7 @@ void sinelon()
   fadeToBlackBy( leds, NUM_LEDS, 20);
   int pos = beatsin16( 13, 0, NUM_LEDS-1 );
   leds[pos] += CHSV( gHue, 255, 192);
+      FastLED.show();
 }
 
 void bpm()
@@ -112,6 +141,7 @@ void bpm()
   for( int i = 0; i < NUM_LEDS; i++) { //9948
     leds[i] = ColorFromPalette(palette, gHue+(i*2), beat-gHue+(i*10));
   }
+      FastLED.show();
 }
 
 void juggle() {
@@ -122,6 +152,7 @@ void juggle() {
     leds[beatsin16( i+7, 0, NUM_LEDS-1 )] |= CHSV(dothue, 200, 255);
     dothue += 32;
   }
+    FastLED.show();
 }
 
 void cylon() { 
@@ -155,10 +186,10 @@ void teamName() {
   if(--x < -150) {
     x = matrix.width();
     if(++pass >= 3) pass = 0;
-    matrix.setTextColor(colors[pass]);
+  //  matrix.setTextColor(colors[pass]);
   }
   matrix.show();
-  delay(50);
+  delay(10);
 }
 
 void SPARO() {
@@ -168,21 +199,21 @@ void SPARO() {
   if(--x < -32) {
     x = matrix.width();
     if(++pass >= 3) pass = 0;
-    matrix.setTextColor(colors[pass]);
+  //  matrix.setTextColor(colors[pass]);
   }
   matrix.show();
-  delay(50);
+  delay(30);
 }
 
 void thankYou() {
   matrix.fillScreen(0);
   matrix.setCursor(x, 0);
-  matrix.print(F("Thank You (SPONSOR_NAME_HERE"));
+  matrix.print(F("Thank You LEIDOS"));
   if(--x < -150) {
     x = matrix.width();
     if(++pass >= 3) pass = 0;
-    matrix.setTextColor(colors[pass]);
+  //  matrix.setTextColor(colors[pass]);
   }
   matrix.show();
-  delay(50);
+  delay(20);
 }
